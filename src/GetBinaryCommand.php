@@ -16,6 +16,7 @@ use Spiral\RoadRunner\Console\Archive\Factory;
 use Spiral\RoadRunner\Console\Command\ArchitectureOption;
 use Spiral\RoadRunner\Console\Command\InstallationLocationOption;
 use Spiral\RoadRunner\Console\Command\OperatingSystemOption;
+use Spiral\RoadRunner\Console\Command\StabilityOption;
 use Spiral\RoadRunner\Console\Command\VersionFilterOption;
 use Spiral\RoadRunner\Console\Repository\AssetInterface;
 use Spiral\RoadRunner\Console\Repository\ReleaseInterface;
@@ -32,7 +33,7 @@ class GetBinaryCommand extends Command
      * @var string
      */
     private const ERROR_ENVIRONMENT =
-        'Could not find any available RoadRunner binary version which meets criterion (--%s=%s --%s=%s). ' .
+        'Could not find any available RoadRunner binary version which meets criterion (--%s=%s --%s=%s --%s=%s). ' .
         'Available: %s';
 
     /**
@@ -51,6 +52,11 @@ class GetBinaryCommand extends Command
     private VersionFilterOption $version;
 
     /**
+     * @var StabilityOption
+     */
+    private StabilityOption $stability;
+
+    /**
      * @var InstallationLocationOption
      */
     private InstallationLocationOption $location;
@@ -66,6 +72,7 @@ class GetBinaryCommand extends Command
         $this->arch = new ArchitectureOption($this);
         $this->version = new VersionFilterOption($this);
         $this->location = new InstallationLocationOption($this);
+        $this->stability = new StabilityOption($this);
     }
 
     /**
@@ -87,19 +94,29 @@ class GetBinaryCommand extends Command
         $target = $this->location->get($input, $io);
         $repository = $this->getRepository();
 
-        $output->write(\sprintf('  - <info>%s</info>: Installation...', $repository->getName()));
+        $output->writeln('');
+        $output->writeln(' Environment:');
+        $output->writeln(\sprintf('   - Version:          <info>%s</info>', $this->version->get($input, $io)));
+        $output->writeln(\sprintf('   - Stability:        <info>%s</info>', $this->stability->get($input, $io)));
+        $output->writeln(\sprintf('   - Operating System: <info>%s</info>', $this->os->get($input, $io)));
+        $output->writeln(\sprintf('   - Architecture:     <info>%s</info>', $this->arch->get($input, $io)));
+        $output->writeln('');
+
 
         // List of all available releases
         $releases = $this->version->find($input, $io, $repository);
 
-        // Matched asset
+        /**
+         * @var AssetInterface $asset
+         * @var ReleaseInterface $release
+         */
         [$asset, $release] = $this->findAsset($repository, $releases, $input, $io);
 
         // Installation
         $output->writeln(
-            \sprintf("\r  - <info>%s</info>", $repository->getName()) .
+            \sprintf("  - <info>%s</info>", $release->getRepositoryName()) .
             \sprintf(' (<comment>%s</comment>):', $release->getVersion()) .
-            \sprintf(' Downloading <info>%s</info>', $asset->getName())
+            ' Downloading...'
         );
 
         // Install rr binary
@@ -233,9 +250,13 @@ class GetBinaryCommand extends Command
     ): array {
         $osOption = $this->os->get($in, $io);
         $archOption = $this->arch->get($in, $io);
+        $stabilityOption = $this->stability->get($in, $io);
 
         /** @var ReleaseInterface[] $filtered */
-        $filtered = $releases->withAssets();
+        $filtered = $releases
+            ->stability($stabilityOption)
+            ->withAssets()
+        ;
 
         foreach ($filtered as $release) {
             $asset = $release->getAssets()
@@ -256,12 +277,13 @@ class GetBinaryCommand extends Command
             return [$asset, $release];
         }
 
-
         $message = \vsprintf(self::ERROR_ENVIRONMENT, [
             $this->os->getName(),
             $osOption,
             $this->arch->getName(),
             $archOption,
+            $this->stability->getName(),
+            $stabilityOption,
             $this->version->choices($releases),
         ]);
 

@@ -14,6 +14,7 @@ namespace Spiral\RoadRunner\Console\Repository;
 use Composer\Semver\Semver;
 use Composer\Semver\VersionParser;
 use JetBrains\PhpStorm\ExpectedValues;
+use Spiral\RoadRunner\Console\Environment\Stability;
 
 abstract class Release implements ReleaseInterface
 {
@@ -41,17 +42,17 @@ abstract class Release implements ReleaseInterface
     /**
      * @var string
      */
-    private string $configUrl;
+    private string $repository;
 
     /**
      * @param string $name
-     * @param string $config
+     * @param string $repository
      * @param iterable $assets
      */
-    public function __construct(string $name, string $config, iterable $assets = [])
+    public function __construct(string $name, string $repository, iterable $assets = [])
     {
         $this->name = $name;
-        $this->configUrl = $config;
+        $this->repository = $repository;
 
         $this->assets = AssetsCollection::create($assets);
 
@@ -104,9 +105,9 @@ abstract class Release implements ReleaseInterface
     /**
      * @return string
      */
-    protected function getConfigUrl(): string
+    public function getRepositoryName(): string
     {
-        return $this->configUrl;
+        return $this->repository;
     }
 
     /**

@@ -13,7 +13,6 @@ namespace Spiral\RoadRunner\Console\Environment\Architecture;
 
 use JetBrains\PhpStorm\ExpectedValues;
 use Spiral\RoadRunner\Console\Environment\Architecture;
-use Spiral\RoadRunner\Console\Environment\EnvironmentAwareTrait;
 
 /**
  * @internal Factory is an internal library class, please do not use it in your code.
@@ -23,13 +22,6 @@ use Spiral\RoadRunner\Console\Environment\EnvironmentAwareTrait;
  */
 class Factory
 {
-    use EnvironmentAwareTrait;
-
-    /**
-     * @var string
-     */
-    public const ENV_PROCESSOR_ARCHITECTURE = 'PROCESSOR_ARCHITECTURE';
-
     /**
      * @var string
      */
@@ -48,13 +40,12 @@ class Factory
     ];
 
     /**
-     * @param array|null $variables
      * @return ArchitectureType
      */
     #[ExpectedValues(valuesFromClass: Architecture::class)]
-    public function createFromGlobals(array $variables = null): string
+    public function createFromGlobals(): string
     {
-        $uname = $this->env($variables, self::ENV_PROCESSOR_ARCHITECTURE, \php_uname('m'));
+        $uname = \php_uname('m');
 
         foreach (self::UNAME_MAPPINGS as $result => $available) {
             if (\in_array($uname, $available, true)) {
@@ -62,8 +53,6 @@ class Factory
             }
         }
 
-        throw new \OutOfRangeException(
-            \sprintf(self::ERROR_UNKNOWN_ARCH, $uname)
-        );
+        throw new \OutOfRangeException(\sprintf(self::ERROR_UNKNOWN_ARCH, $uname));
     }
 }

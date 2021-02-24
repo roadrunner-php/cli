@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Repository;
 
+use Spiral\RoadRunner\Console\Environment\Stability;
+
 /**
  * @template-extends Collection<ReleaseInterface>
  */

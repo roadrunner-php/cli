@@ -25,13 +25,12 @@ final class Architecture
     public const ARCH_X86_64 = 'amd64';
 
     /**
-     * @param array|null $variables
      * @return ArchitectureType
      */
     #[ExpectedValues(valuesFromClass: Architecture::class)]
-    public static function createFromGlobals(array $variables = null): string
+    public static function createFromGlobals(): string
     {
-        return (new Factory())->createFromGlobals($variables);
+        return (new Factory())->createFromGlobals();
     }
 
     /**

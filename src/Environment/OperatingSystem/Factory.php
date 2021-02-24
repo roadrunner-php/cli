@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Spiral\RoadRunner\Console\Environment\OperatingSystem;
 
 use JetBrains\PhpStorm\ExpectedValues;
-use Spiral\RoadRunner\Console\Environment\EnvironmentAwareTrait;
 use Spiral\RoadRunner\Console\Environment\OperatingSystem;
 
 /**
@@ -23,33 +22,18 @@ use Spiral\RoadRunner\Console\Environment\OperatingSystem;
  */
 class Factory
 {
-    use EnvironmentAwareTrait;
-
-    /**
-     * @var string
-     */
-    public const ENV_OS_FAMILY = 'OS_FAMILY';
-
-    /**
-     * @var string
-     */
-    public const ENV_OS_NAME = 'OS_NAME';
-
     /**
      * @var string
      */
     private const ERROR_UNKNOWN_OS = 'Current OS (%s) may not be supported';
 
     /**
-     * @param array|null $variables
      * @return OperatingSystemType
      */
     #[ExpectedValues(valuesFromClass: OperatingSystem::class)]
-    public function createFromGlobals(array $variables = null): string
+    public function createFromGlobals(): string
     {
-        $family = $this->env($variables, self::ENV_OS_FAMILY, \PHP_OS_FAMILY);
-
-        switch ($family) {
+        switch (\PHP_OS_FAMILY) {
             case 'Windows':
                 return OperatingSystem::OS_WINDOWS;
 
@@ -60,18 +44,14 @@ class Factory
                 return OperatingSystem::OS_DARWIN;
 
             case 'Linux':
-                $name = $this->env($variables, self::ENV_OS_NAME, \PHP_OS);
-
                 // TODO Test this case (not sure if they are correct)
-                return \str_contains($name, 'Alpine')
+                return \str_contains(\PHP_OS, 'Alpine')
                     ? OperatingSystem::OS_ALPINE
                     : OperatingSystem::OS_LINUX
                 ;
 
             default:
-                throw new \OutOfRangeException(
-                    \sprintf(self::ERROR_UNKNOWN_OS, $family)
-                );
+                throw new \OutOfRangeException(\sprintf(self::ERROR_UNKNOWN_OS, \PHP_OS_FAMILY));
         }
     }
 }
