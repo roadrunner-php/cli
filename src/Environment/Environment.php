@@ -11,17 +11,17 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Environment;
 
-trait EnvironmentAwareTrait
+final class Environment
 {
     /**
-     * @param array|null $variables
      * @param string $key
      * @param string|null $default
+     * @param array $variables
      * @return string|null
      *
      * @psalm-return ($default is string ? string : string|null)
      */
-    protected function env(?array $variables, string $key, string $default = null): ?string
+    public static function get(string $key, string $default = null, array $variables = []): ?string
     {
         /** @var mixed $result */
         $result = $variables[$key] ?? $_ENV[$key] ?? $_SERVER[$key] ?? null;

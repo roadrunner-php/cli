@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Spiral\RoadRunner\Console\Repository;
+namespace Spiral\RoadRunner\Console\Environment;
 
 /**
  * @psalm-type StabilityType = Stability::STABILITY_*
@@ -40,4 +40,28 @@ final class Stability
      * @var string
      */
     public const STABILITY_DEV = 'dev';
+
+    /**
+     * @return array<string, StabilityType>
+     */
+    public static function all(): array
+    {
+        static $values;
+
+        if ($values === null) {
+            $values = Enum::values(self::class, 'STABILITY_');
+        }
+
+        /** @psalm-var array<string, StabilityType> $values */
+        return $values;
+    }
+
+    /**
+     * @param string $value
+     * @return bool
+     */
+    public static function isValid(string $value): bool
+    {
+        return \in_array($value, self::all(), true);
+    }
 }

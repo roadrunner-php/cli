@@ -33,14 +33,14 @@ final class GitHubRelease extends Release
     /**
      * @param HttpClientInterface $client
      * @param string $name
-     * @param string $config
+     * @param string $repository
      * @param iterable|array $assets
      */
-    public function __construct(HttpClientInterface $client, string $name, string $config, iterable $assets = [])
+    public function __construct(HttpClientInterface $client, string $name, string $repository, iterable $assets = [])
     {
         $this->client = $client;
 
-        parent::__construct($name, $config, $assets);
+        parent::__construct($name, $repository, $assets);
     }
 
     /**
@@ -48,7 +48,12 @@ final class GitHubRelease extends Release
      */
     public function getConfig(): string
     {
-        $response = $this->client->request('GET', $this->getConfigUrl());
+        $config = \vsprintf('https://raw.githubusercontent.com/%s/%s/.rr.yaml', [
+            $this->getRepositoryName(),
+            $this->getName()
+        ]);
+
+        $response = $this->client->request('GET', $config);
 
         return $response->getContent();
     }
@@ -73,11 +78,6 @@ final class GitHubRelease extends Release
             }
         };
 
-        $config = \vsprintf('https://raw.githubusercontent.com/%s/%s/.rr.yaml', [
-            $repository->getName(),
-            $release['name']
-        ]);
-
-        return new self($client, $release['name'], $config, AssetsCollection::from($instantiator));
+        return new self($client, $release['name'], $repository->getName(), AssetsCollection::from($instantiator));
     }
 }

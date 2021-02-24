@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Spiral\RoadRunner\Console\Repository;
 
 use JetBrains\PhpStorm\ExpectedValues;
+use Spiral\RoadRunner\Console\Environment\Stability;
 
 /**
  * @psalm-import-type StabilityType from Stability
@@ -27,6 +28,11 @@ interface ReleaseInterface
      * @return string
      */
     public function getVersion(): string;
+
+    /**
+     * @return string
+     */
+    public function getRepositoryName(): string;
 
     /**
      * @return StabilityType
