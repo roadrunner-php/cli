@@ -89,7 +89,7 @@ class VersionsCommand extends Command
         $versions = $this->getRepository()
             ->getReleases()
             ->sortByVersion()
-            ->stability($this->stability->get($input, $io))
+            ->minimumStability($this->stability->get($input, $io))
             ->filter(static fn(ReleaseInterface $release): bool => \count($release->getAssets()) > 0)
             ->satisfies($this->version->get($input, $io))
         ;

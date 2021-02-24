@@ -42,6 +42,26 @@ final class Stability
     public const STABILITY_DEV = 'dev';
 
     /**
+     * @var int[]
+     */
+    private const WEIGHT = [
+        self::STABILITY_STABLE => 4,
+        self::STABILITY_RC     => 3,
+        self::STABILITY_BETA   => 2,
+        self::STABILITY_ALPHA  => 1,
+        self::STABILITY_DEV    => 0,
+    ];
+
+    /**
+     * @param StabilityType $type
+     * @return positive-int|0
+     */
+    public static function toInt(string $type): int
+    {
+        return self::WEIGHT[$type] ?? 0;
+    }
+
+    /**
      * @return array<string, StabilityType>
      */
     public static function all(): array

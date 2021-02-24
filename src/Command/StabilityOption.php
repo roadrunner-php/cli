@@ -16,6 +16,9 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Style\StyleInterface;
 
+/**
+ * @psalm-import-type StabilityType from Stability
+ */
 class StabilityOption extends Option
 {
     /**
@@ -46,6 +49,7 @@ class StabilityOption extends Option
 
     /**
      * {@inheritDoc}
+     * @return StabilityType|string
      */
     public function get(InputInterface $input, StyleInterface $io): string
     {
