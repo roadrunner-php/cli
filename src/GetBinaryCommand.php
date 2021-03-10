@@ -254,7 +254,7 @@ class GetBinaryCommand extends Command
 
         /** @var ReleaseInterface[] $filtered */
         $filtered = $releases
-            ->stability($stabilityOption)
+            ->minimumStability($stabilityOption)
             ->withAssets()
         ;
 
