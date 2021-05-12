@@ -11,22 +11,14 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Repository;
 
+use Spiral\RoadRunner\Console\Environment\Stability;
+
 /**
  * @template-extends Collection<ReleaseInterface>
+ * @psalm-import-type StabilityType from Stability
  */
 final class ReleasesCollection extends Collection
 {
-    /**
-     * @var int[]
-     */
-    private const STABILITY_WEIGHT = [
-        Stability::STABILITY_STABLE => 4,
-        Stability::STABILITY_RC     => 3,
-        Stability::STABILITY_BETA   => 2,
-        Stability::STABILITY_ALPHA  => 1,
-        Stability::STABILITY_DEV    => 0,
-    ];
-
     /**
      * @param string ...$constraints
      * @return $this
@@ -111,7 +103,7 @@ final class ReleasesCollection extends Collection
     private function comparisonVersionString(ReleaseInterface $release): string
     {
         $stability = $release->getStability();
-        $weight = self::STABILITY_WEIGHT[$stability] ?? 0;
+        $weight = Stability::toInt($stability);
 
         return \str_replace('-' . $stability, '.' . $weight . '.', $release->getVersion());
     }
@@ -125,7 +117,7 @@ final class ReleasesCollection extends Collection
     }
 
     /**
-     * @param string $stability
+     * @param StabilityType $stability
      * @return $this
      */
     public function stability(string $stability): self
@@ -133,5 +125,18 @@ final class ReleasesCollection extends Collection
         $filter = static fn(ReleaseInterface $rel): bool => $rel->getStability() === $stability;
 
         return $this->filter($filter);
+    }
+
+    /**
+     * @param StabilityType $stability
+     * @return $this
+     */
+    public function minimumStability(string $stability): self
+    {
+        $weight = Stability::toInt($stability);
+
+        return $this->filter(function (ReleaseInterface $release) use ($weight): bool {
+            return Stability::toInt($release->getStability()) >= $weight;
+        });
     }
 }

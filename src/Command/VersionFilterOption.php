@@ -58,7 +58,7 @@ class VersionFilterOption extends Option
             ->toArray()
         ;
 
-        return \implode(', ', $versions);
+        return \implode(', ', \array_unique($versions));
     }
 
     /**

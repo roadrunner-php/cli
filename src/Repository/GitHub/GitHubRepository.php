@@ -27,16 +27,6 @@ final class GitHubRepository implements RepositoryInterface
     /**
      * @var string
      */
-    public const OFFICIAL_REPOSITORY_OWNER = 'spiral';
-
-    /**
-     * @var string
-     */
-    public const OFFICIAL_REPOSITORY_NAME = 'roadrunner';
-
-    /**
-     * @var string
-     */
     private const URL_RELEASES = 'https://api.github.com/repos/%s/releases';
 
     /**
@@ -68,15 +58,14 @@ final class GitHubRepository implements RepositoryInterface
     }
 
     /**
+     * @param string $owner
+     * @param string $name
      * @param HttpClientInterface|null $client
-     * @param array|null $variables
-     * @return self
+     * @return GitHubRepository
      */
-    public static function createFromGlobals(HttpClientInterface $client = null, array $variables = null): self
+    public static function create(string $owner, string $name, HttpClientInterface $client = null): GitHubRepository
     {
-        $factory = new Factory($client);
-
-        return $factory->createFromGlobals($variables);
+        return new GitHubRepository($owner, $name, $client);
     }
 
     /**

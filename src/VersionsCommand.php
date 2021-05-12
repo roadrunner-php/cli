@@ -13,9 +13,10 @@ namespace Spiral\RoadRunner\Console;
 
 use Spiral\RoadRunner\Console\Command\ArchitectureOption;
 use Spiral\RoadRunner\Console\Command\OperatingSystemOption;
+use Spiral\RoadRunner\Console\Command\StabilityOption;
 use Spiral\RoadRunner\Console\Command\VersionFilterOption;
 use Spiral\RoadRunner\Console\Repository\ReleaseInterface;
-use Spiral\RoadRunner\Console\Repository\Stability;
+use Spiral\RoadRunner\Console\Environment\Stability;
 use Spiral\RoadRunner\Version;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -39,6 +40,11 @@ class VersionsCommand extends Command
     private VersionFilterOption $version;
 
     /**
+     * @var StabilityOption
+     */
+    private StabilityOption $stability;
+
+    /**
      * @param string|null $name
      */
     public function __construct(string $name = null)
@@ -47,6 +53,7 @@ class VersionsCommand extends Command
 
         $this->os = new OperatingSystemOption($this);
         $this->arch = new ArchitectureOption($this);
+        $this->stability = new StabilityOption($this);
 
         $this->version = new class($this) extends VersionFilterOption {
             protected function default(): string
@@ -71,11 +78,19 @@ class VersionsCommand extends Command
     {
         $io = $this->io($input, $output);
 
+        $output->writeln('');
+        $output->writeln(' Environment:');
+        $output->writeln(\sprintf('   - Version:          <info>%s</info>', $this->version->get($input, $io)));
+        $output->writeln(\sprintf('   - Stability:        <info>%s</info>', $this->stability->get($input, $io)));
+        $output->writeln('');
+
         $rows = [];
 
         $versions = $this->getRepository()
             ->getReleases()
             ->sortByVersion()
+            ->minimumStability($this->stability->get($input, $io))
+            ->filter(static fn(ReleaseInterface $release): bool => \count($release->getAssets()) > 0)
             ->satisfies($this->version->get($input, $io))
         ;
 
