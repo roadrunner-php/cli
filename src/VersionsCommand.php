@@ -105,7 +105,7 @@ class VersionsCommand extends Command
 
         $io->table(['Release', 'Stability', 'Binaries', 'Compatibility'], $rows);
 
-        return self::SUCCESS;
+        return 0;
     }
 
     /**

@@ -128,7 +128,7 @@ class GetBinaryCommand extends Command
         if ($file === null) {
             $io->warning('RoadRunner has not been installed');
 
-            return self::FAILURE;
+            return 1;
         }
 
         $io->success('Your project is now ready in ' . $file->getPath());
@@ -144,7 +144,7 @@ class GetBinaryCommand extends Command
             '<comment>$ ' . $file->getFilename() . ' serve</comment>',
         ]);
 
-        return self::SUCCESS;
+        return 0;
     }
 
     /**
@@ -333,7 +333,6 @@ class GetBinaryCommand extends Command
      */
     private function footer(OutputInterface $output, string $name): void
     {
-
         $messages = [
             '',
             '  For more detailed documentation, see the ' .
