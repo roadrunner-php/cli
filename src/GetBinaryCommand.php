@@ -186,6 +186,10 @@ class GetBinaryCommand extends Command
             $out->writeln($message);
 
             $extractor->next();
+
+            if (! $file->isExecutable()) {
+                @chmod($file->getRealPath(), 0755);
+            }
         }
 
         return $file;
