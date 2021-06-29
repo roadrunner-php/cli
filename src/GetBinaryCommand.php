@@ -202,7 +202,7 @@ class GetBinaryCommand extends Command
     {
         $to .= '/.rr.yaml';
 
-        if (\is_file($to)) {
+        if (\is_file($to) || \is_file(\getcwd().'/.rr.yaml')) {
             return false;
         }
 
