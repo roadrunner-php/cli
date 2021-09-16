@@ -94,7 +94,7 @@ final class GitHubRelease extends Release
 
         try {
             return $parser->normalize($release['tag_name']);
-        } catch (\UnexpectedValueException $e) {
+        } catch (\Throwable $e) {
             try {
                 return $parser->normalize($release['name']);
             } catch (\Throwable $e) {
