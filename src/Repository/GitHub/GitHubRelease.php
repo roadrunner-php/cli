@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Repository\GitHub;
 
+use Composer\Semver\VersionParser;
 use Spiral\RoadRunner\Console\Repository\AssetsCollection;
 use Spiral\RoadRunner\Console\Repository\Release;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -78,6 +79,27 @@ final class GitHubRelease extends Release
             }
         };
 
-        return new self($client, $release['name'], $repository->getName(), AssetsCollection::from($instantiator));
+        $version = self::getTagVersion($release);
+
+        return new self($client, $version, $repository->getName(), AssetsCollection::from($instantiator));
+    }
+
+    /**
+     * @param array { tag_name: string, name: string } $release
+     * @return string
+     */
+    private static function getTagVersion(array $release): string
+    {
+        $parser = new VersionParser();
+
+        try {
+            return $parser->normalize($release['tag_name']);
+        } catch (\Throwable $e) {
+            try {
+                return $parser->normalize($release['name']);
+            } catch (\Throwable $e) {
+                return 'dev-' . $release['tag_name'];
+            }
+        }
     }
 }
