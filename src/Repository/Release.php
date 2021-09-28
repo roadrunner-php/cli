@@ -46,34 +46,35 @@ abstract class Release implements ReleaseInterface
 
     /**
      * @param string $name
+     * @param string $version
      * @param string $repository
      * @param iterable $assets
      */
-    public function __construct(string $name, string $repository, iterable $assets = [])
+    public function __construct(string $name, string $version, string $repository, iterable $assets = [])
     {
-        $this->name = $name;
+        $this->version = $version;
         $this->repository = $repository;
 
+        $this->name = $this->simplifyReleaseName($name);
         $this->assets = AssetsCollection::create($assets);
 
-        $this->version = $this->parseVersion($name);
-        $this->stability = $this->parseStability($name);
+        $this->stability = $this->parseStability($version);
     }
 
     /**
-     * @param string $name
+     * @param string $version
      * @return string
      */
-    private function parseStability(string $name): string
+    private function parseStability(string $version): string
     {
-        return VersionParser::parseStability($name);
+        return VersionParser::parseStability($version);
     }
 
     /**
      * @param string $name
      * @return string
      */
-    private function parseVersion(string $name): string
+    private function simplifyReleaseName(string $name): string
     {
         $version = (new VersionParser())->normalize($name);
 
@@ -132,6 +133,6 @@ abstract class Release implements ReleaseInterface
      */
     public function satisfies(string $constraint): bool
     {
-        return Semver::satisfies($this->getVersion(), $constraint);
+        return Semver::satisfies($this->getName(), $constraint);
     }
 }

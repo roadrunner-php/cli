@@ -20,11 +20,17 @@ use Spiral\RoadRunner\Console\Environment\Stability;
 interface ReleaseInterface
 {
     /**
+     * Returns Composer's compatible "pretty" release version.
+     *
      * @return string
      */
     public function getName(): string;
 
     /**
+     * Returns internal release tag version.
+     * Please note that this version may not be compatible with Composer's
+     * comparators.
+     *
      * @return string
      */
     public function getVersion(): string;

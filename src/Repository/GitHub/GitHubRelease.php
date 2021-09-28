@@ -34,14 +34,20 @@ final class GitHubRelease extends Release
     /**
      * @param HttpClientInterface $client
      * @param string $name
+     * @param string $version
      * @param string $repository
      * @param iterable|array $assets
      */
-    public function __construct(HttpClientInterface $client, string $name, string $repository, iterable $assets = [])
-    {
+    public function __construct(
+        HttpClientInterface $client,
+        string $name,
+        string $version,
+        string $repository,
+        iterable $assets = []
+    ) {
         $this->client = $client;
 
-        parent::__construct($name, $repository, $assets);
+        parent::__construct($name, $version, $repository, $assets);
     }
 
     /**
@@ -51,7 +57,7 @@ final class GitHubRelease extends Release
     {
         $config = \vsprintf('https://raw.githubusercontent.com/%s/%s/.rr.yaml', [
             $this->getRepositoryName(),
-            $this->getName()
+            $this->getVersion(),
         ]);
 
         $response = $this->client->request('GET', $config);
@@ -79,16 +85,22 @@ final class GitHubRelease extends Release
             }
         };
 
-        $version = self::getTagVersion($release);
+        $name = self::getTagName($release);
+        $version = $release['tag_name'] ?? $release['name'];
 
-        return new self($client, $version, $repository->getName(), AssetsCollection::from($instantiator));
+        return new self($client, $name, $version, $repository->getName(), AssetsCollection::from($instantiator));
     }
 
     /**
+     * Returns pretty-formatted tag (release) name.
+     *
+     * Note: The return value is "pretty", but that does not mean that the
+     * tag physically exists.
+     *
      * @param array { tag_name: string, name: string } $release
      * @return string
      */
-    private static function getTagVersion(array $release): string
+    private static function getTagName(array $release): string
     {
         $parser = new VersionParser();
 

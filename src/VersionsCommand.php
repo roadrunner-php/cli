@@ -157,7 +157,7 @@ class VersionsCommand extends Command
      */
     private function versionToString(ReleaseInterface $release): string
     {
-        return $release->getVersion();
+        return $release->getName();
     }
 
     /**
