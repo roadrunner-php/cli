@@ -19,7 +19,7 @@ interface RepositoryInterface
     public function getName(): string;
 
     /**
-     * @return ReleasesCollection
+     * @return ReleasesCollection|iterable<ReleaseInterface>
      */
     public function getReleases(): ReleasesCollection;
 }

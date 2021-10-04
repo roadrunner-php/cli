@@ -15,6 +15,7 @@ use Spiral\RoadRunner\Console\Environment\Environment;
 use Spiral\RoadRunner\Console\Repository\GitHub\GitHubRepository;
 use Spiral\RoadRunner\Console\Repository\RepositoriesCollection;
 use Spiral\RoadRunner\Console\Repository\RepositoryInterface;
+use Spiral\RoadRunner\Console\Repository\Version1\StaticRepository;
 use Symfony\Component\Console\Command\Command as BaseCommand;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -45,7 +46,9 @@ abstract class Command extends BaseCommand
         ]);
 
         return new RepositoriesCollection([
-            GitHubRepository::create('spiral', 'roadrunner', $client),
+            // Releases of RR 1.0
+            new StaticRepository($client),
+            // Releases of RR 2.0+
             GitHubRepository::create('spiral', 'roadrunner-binary', $client)
         ]);
     }

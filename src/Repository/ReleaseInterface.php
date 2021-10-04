@@ -47,7 +47,7 @@ interface ReleaseInterface
     public function getStability(): string;
 
     /**
-     * @return AssetsCollection
+     * @return AssetsCollection|iterable<AssetInterface>
      */
     public function getAssets(): AssetsCollection;
 
