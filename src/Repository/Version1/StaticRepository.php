@@ -53,21 +53,6 @@ final class StaticRepository implements RepositoryInterface
             ],
         ],
         [
-            'name' => '2.0.0-alpha26',
-            'version' => 'v2.0.0-alpha26',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha25',
-            'version' => 'v2.0.0-alpha25',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha23',
-            'version' => 'v2.0.0-alpha23',
-            'assets' => [],
-        ],
-        [
             'name' => '1.9.0',
             'version' => 'v1.9.0',
             'assets' => [
@@ -94,41 +79,6 @@ final class StaticRepository implements RepositoryInterface
             ],
         ],
         [
-            'name' => '2.0.0-alpha22',
-            'version' => 'v2.0.0-alpha22',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha21',
-            'version' => 'v2.0.0-alpha21',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha20',
-            'version' => 'v2.0.0-alpha20',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha18',
-            'version' => 'v2.0.0-alpha18',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha17',
-            'version' => 'v2.0.0-alpha17',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha15',
-            'version' => 'v2.0.0-alpha15',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha14',
-            'version' => 'v2.0.0-alpha14',
-            'assets' => [],
-        ],
-        [
             'name' => '1.8.4',
             'version' => 'v1.8.4',
             'assets' => [
@@ -153,51 +103,6 @@ final class StaticRepository implements RepositoryInterface
                     'uri' => 'https://github.com/spiral/roadrunner/releases/download/v1.8.4/roadrunner-1.8.4-windows-amd64.zip',
                 ],
             ],
-        ],
-        [
-            'name' => '2.0.0-alpha13',
-            'version' => 'v2.0.0-alpha13',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha12',
-            'version' => 'v2.0.0-alpha12',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha11',
-            'version' => 'v2.0.0-alpha11',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha10',
-            'version' => 'v2.0.0-alpha10',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha7',
-            'version' => 'v2.0.0-alpha7',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha6',
-            'version' => 'v2.0.0-alpha6',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha5',
-            'version' => 'v2.0.0-alpha5',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha3',
-            'version' => 'v2.0.0-alpha3',
-            'assets' => [],
-        ],
-        [
-            'name' => '2.0.0-alpha1',
-            'version' => 'v2.0.0-alpha1',
-            'assets' => [],
         ],
         [
             'name' => '1.8.3',
