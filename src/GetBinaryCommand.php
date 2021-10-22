@@ -119,6 +119,10 @@ class GetBinaryCommand extends Command
             ' Downloading...'
         );
 
+        if ($output->isVerbose()) {
+            $output->writeln(\sprintf("     -- <info>%s</info>", $asset->getName()));
+        }
+
         // Install rr binary
         $file = $this->installBinary($target, $release, $asset, $io, $output);
 

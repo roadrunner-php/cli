@@ -36,6 +36,8 @@ class Factory
             'x86',
             'x64',
             'x86_64',
+        ],
+        Architecture::ARCH_ARM_64 => [
             'arm64',
             'aarch64',
         ],
