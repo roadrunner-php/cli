@@ -23,6 +23,10 @@ final class Architecture
      * @var string
      */
     public const ARCH_X86_64 = 'amd64';
+    /**
+     * @var string
+     */
+    public const ARCH_ARM_64 = 'arm64';
 
     /**
      * @return ArchitectureType
