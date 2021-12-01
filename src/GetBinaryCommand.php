@@ -268,6 +268,7 @@ class GetBinaryCommand extends Command
 
         foreach ($filtered as $release) {
             $asset = $release->getAssets()
+                ->onlyRoadrunner()
                 ->whereArchitecture($archOption)
                 ->whereOperatingSystem($osOption)
                 ->first()
