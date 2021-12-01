@@ -17,6 +17,16 @@ namespace Spiral\RoadRunner\Console\Repository;
 final class AssetsCollection extends Collection
 {
     /**
+     * @return $this
+     */
+    public function onlyRoadrunner(): self
+    {
+        return $this->filter(static fn (AssetInterface $asset): bool =>
+            \str_starts_with($asset->getName(), 'roadrunner')
+        );
+    }
+
+    /**
      * @param string $arch
      * @return $this
      */
