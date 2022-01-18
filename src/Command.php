@@ -46,10 +46,7 @@ abstract class Command extends BaseCommand
         ]);
 
         return new RepositoriesCollection([
-            // Releases of RR 1.0
-            new StaticRepository($client),
-            // Releases of RR 2.0+
-            GitHubRepository::create('spiral', 'roadrunner-binary', $client)
+            GitHubRepository::create('roadrunner-server', 'roadrunner', $client),
         ]);
     }
 
