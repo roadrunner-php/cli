@@ -28,8 +28,16 @@ RoadRunner includes PSR-7/PSR-17 compatible HTTP and HTTP/2 server and can be us
 This repository contains commands to help you work with the RoadRunner, such as:
 
 - `get-binary` (or `get`) - allows to install the latest version of the RoadRunner compatible with 
-  your environment (operating system, processor architecture, runtime, etc...)
-
+  your environment (operating system, processor architecture, runtime, etc...).
+  Also, this command creates an example `.rr.yaml` configuration file. If don't use the command without additional options 
+  `plugin` and `preset`, an example with a complete configuration file will be created. 
+  Using the `plugin` option (shortcut `p`) can create an example configuration file with only plugins needed. 
+  For example, with http plugin only: `get-binary -p http`, http and jobs: `get-binary -p http -p jobs`. 
+  Available plugins: `amqp`, `beanstalk`, `boltdb`, `broadcast`, `endure`, `fileserver`, `grpc`, `http`, `jobs`, `kv`,
+  `logs`, `metrics`, `nats`, `redis`, `reload`, `rpc`, `server`, `service`, `sqs`, `status`, `tcp`, `temporal`, `websockets`.
+  Using the `preset` option can create an example configuration file with popular plugins for different typical tasks. 
+  For example, with web preset: `get-binary --preset web`.
+  Available presets: `web` (contains plugins `http`, `jobs`).
 - `versions` - displays a list of available RoadRunner binary versions.
 
 Testing:

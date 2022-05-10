@@ -18,12 +18,15 @@ use Spiral\RoadRunner\Console\Command\InstallationLocationOption;
 use Spiral\RoadRunner\Console\Command\OperatingSystemOption;
 use Spiral\RoadRunner\Console\Command\StabilityOption;
 use Spiral\RoadRunner\Console\Command\VersionFilterOption;
+use Spiral\RoadRunner\Console\Configuration\Generator;
+use Spiral\RoadRunner\Console\Configuration\Plugins;
 use Spiral\RoadRunner\Console\Repository\AssetInterface;
 use Spiral\RoadRunner\Console\Repository\ReleaseInterface;
 use Spiral\RoadRunner\Console\Repository\ReleasesCollection;
 use Spiral\RoadRunner\Console\Repository\RepositoryInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\StyleInterface;
 
@@ -73,6 +76,23 @@ class GetBinaryCommand extends Command
         $this->version = new VersionFilterOption($this);
         $this->location = new InstallationLocationOption($this);
         $this->stability = new StabilityOption($this);
+    }
+
+    protected function configure(): void
+    {
+        $this->addOption(
+            'plugin',
+            'p',
+            InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY,
+            'Generate configuration with selected plugins.'
+        );
+
+        $this->addOption(
+            'preset',
+            null,
+            InputOption::VALUE_OPTIONAL,
+            'Generate configuration with plugins in a selected preset.'
+        );
     }
 
     /**
@@ -126,7 +146,7 @@ class GetBinaryCommand extends Command
         // Install rr binary
         $file = $this->installBinary($target, $release, $asset, $io, $output);
 
-        $this->installConfig($target, $release, $input, $io);
+        $this->installConfig($target, $input, $io);
 
         // Success
         if ($file === null) {
@@ -199,14 +219,7 @@ class GetBinaryCommand extends Command
         return $file;
     }
 
-    /**
-     * @param string $to
-     * @param ReleaseInterface $from
-     * @param InputInterface $in
-     * @param StyleInterface $io
-     * @return bool
-     */
-    private function installConfig(string $to, ReleaseInterface $from, InputInterface $in, StyleInterface $io): bool
+    private function installConfig(string $to, InputInterface $in, StyleInterface $io): bool
     {
         $to .= '/.rr.yaml';
 
@@ -218,7 +231,18 @@ class GetBinaryCommand extends Command
             return false;
         }
 
-        \file_put_contents($to, $from->getConfig());
+        $generator = new Generator();
+        $plugins = $in->getOption('preset') ?
+            Plugins::fromPreset($in->getOption('preset')) :
+            Plugins::fromPlugins($in->getOption('plugin'));
+
+        try {
+            $config = $generator->generate($plugins);
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+        }
+
+        \file_put_contents($to, $config);
 
         return true;
     }
