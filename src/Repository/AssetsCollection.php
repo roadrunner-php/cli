@@ -32,7 +32,7 @@ final class AssetsCollection extends Collection
     public function exceptDebPackages(): self
     {
         return $this->except(static fn (AssetInterface $asset): bool =>
-            \str_ends_with($asset->getName(), '.deb')
+            \str_ends_with(\strtolower($asset->getName()), '.deb')
         );
     }
 
