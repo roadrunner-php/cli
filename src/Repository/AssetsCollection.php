@@ -27,6 +27,16 @@ final class AssetsCollection extends Collection
     }
 
     /**
+     * @return $this
+     */
+    public function exceptDebPackages(): self
+    {
+        return $this->except(static fn (AssetInterface $asset): bool =>
+            \str_ends_with(\strtolower($asset->getName()), '.deb')
+        );
+    }
+
+    /**
      * @param string $arch
      * @return $this
      */
