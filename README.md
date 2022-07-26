@@ -38,7 +38,7 @@ This repository contains commands to help you work with the RoadRunner, such as:
   Using the `preset` option can create an example configuration file with popular plugins for different typical tasks. 
   For example, with web preset: `get-binary --preset web`.
   Available presets: `web` (contains plugins `http`, `jobs`).
-- `get-protoc-binary` - allows to install the latest version of the `protoc-gen-php-grpc` file compatible with
+- `download-protoc-binary` - allows to install the latest version of the `protoc-gen-php-grpc` file compatible with
   your environment (operating system, processor architecture, runtime, etc...).
 - `versions` - displays a list of available RoadRunner binary versions.
 

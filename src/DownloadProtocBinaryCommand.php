@@ -23,7 +23,7 @@ use Symfony\Component\Console\Style\StyleInterface;
 /**
  * protoc-gen-php-grpc file download command.
  */
-final class GetProtocBinaryCommand extends Command
+final class DownloadProtocBinaryCommand extends Command
 {
     private const ERROR_ENVIRONMENT = 'Could not find any available protoc-gen-php-grpc binary version which meets criterion (--%s=%s --%s=%s --%s=%s). Available: %s';
 
@@ -35,7 +35,7 @@ final class GetProtocBinaryCommand extends Command
 
     public function __construct(string $name = null)
     {
-        parent::__construct($name ?? 'get-protoc-binary');
+        parent::__construct($name ?? 'download-protoc-binary');
 
         $this->os = new OperatingSystemOption($this);
         $this->arch = new ArchitectureOption($this);
