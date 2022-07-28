@@ -12,15 +12,8 @@ final class Server extends AbstractSection
     {
         return [
             self::NAME => [
-                'on_init' => [
-                    'command' => 'any php or script here',
-                    'exec_timeout' => '20s',
-                ],
-                'command' => 'php psr-worker.php',
-                'user' => '',
-                'group' => '',
-                'relay' => 'pipes',
-                'relay_timeout' => '60s'
+                'command' => 'php app.php',
+                'relay' => 'pipes'
             ]
         ];
     }
