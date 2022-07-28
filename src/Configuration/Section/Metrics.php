@@ -12,30 +12,7 @@ final class Metrics extends AbstractSection
     {
         return [
             self::NAME => [
-                'address' => '127.0.0.1:2112',
-                'collect' => [
-                    'app_metric' => [
-                        'type' => 'histogram',
-                        'help' => 'Custom application metric',
-                        'labels' => [
-                            'type'
-                        ],
-                        'buckets' => [
-                            0.1,
-                            0.2,
-                            0.3,
-                            1.0
-                        ],
-                        'objectives' => [
-                            [
-                                '1.4' => 2.3
-                            ],
-                            [
-                                '2.0' => 1.4
-                            ]
-                        ]
-                    ]
-                ]
+                'address' => 'localhost:2112'
             ]
         ];
     }

@@ -4,12 +4,34 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Configuration;
 
+use Spiral\RoadRunner\Console\Configuration\Section\Http;
+use Spiral\RoadRunner\Console\Configuration\Section\Jobs;
+use Spiral\RoadRunner\Console\Configuration\Section\Kv;
+use Spiral\RoadRunner\Console\Configuration\Section\Metrics;
+use Spiral\RoadRunner\Console\Configuration\Section\Rpc;
 use Spiral\RoadRunner\Console\Configuration\Section\SectionInterface;
+use Spiral\RoadRunner\Console\Configuration\Section\Server;
+use Spiral\RoadRunner\Console\Configuration\Section\Version;
 use Spiral\Tokenizer\ClassLocator;
 use Symfony\Component\Finder\Finder;
 
 final class Plugins
 {
+    /**
+     * @psalm-var array<class-string>
+     *
+     * Default plugins in a class-string format.
+     */
+    private array $defaultPlugins = [
+        Version::class,
+        Rpc::class,
+        Server::class,
+        Http::class,
+        Jobs::class,
+        Kv::class,
+        Metrics::class,
+    ];
+
     /**
      * @var string[]
      *
@@ -51,7 +73,7 @@ final class Plugins
     public function getPlugins(): array
     {
         if ($this->requestedPlugins === []) {
-            return $this->available;
+            return $this->defaultPlugins;
         }
 
         $plugins = [];

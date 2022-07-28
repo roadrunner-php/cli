@@ -167,8 +167,9 @@ final class DownloadProtocBinaryCommand extends Command
 
         foreach ($filtered as $release) {
             $asset = $release->getAssets()
-                ->filter(static fn (AssetInterface $asset): bool =>
-                    0 === \strncmp($asset->getName(), 'protoc-gen-php-grpc', \strlen('protoc-gen-php-grpc'))
+                ->filter(
+                    static fn (AssetInterface $asset): bool =>
+                    \str_starts_with($asset->getName(), 'protoc-gen-php-grpc')
                 )
                 ->whereArchitecture($archOption)
                 ->whereOperatingSystem($osOption)
