@@ -13,7 +13,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class MakeConfigCommand extends Command
 {
-    private InstallationLocationOption $location;
+    private readonly InstallationLocationOption $location;
 
     public function __construct(string $name = null)
     {
@@ -39,7 +39,6 @@ class MakeConfigCommand extends Command
     }
 
     /**
-     * {@inheritDoc}
      * @throws \Throwable
      */
     public function execute(InputInterface $input, OutputInterface $output): int

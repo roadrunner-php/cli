@@ -33,23 +33,19 @@ final class Plugins
     ];
 
     /**
-     * @var string[]
-     *
-     * Requested plugins in a shortname format.
-     */
-    private array $requestedPlugins;
-
-    /**
      * @psalm-var non-empty-array<class-string<SectionInterface>>
      *
      * All plugins.
      */
-    private array $available;
+    private readonly array $available;
 
-    private function __construct(array $plugins)
-    {
+    /**
+     * @param string[] $requestedPlugins Requested plugins in a shortname format.
+     */
+    private function __construct(
+        private readonly array $requestedPlugins,
+    ) {
         $this->available = $this->getAvailable();
-        $this->requestedPlugins = $plugins;
     }
 
     public static function fromPlugins(array $plugins): self
@@ -64,10 +60,10 @@ final class Plugins
             case Presets::WEB_PRESET_NANE:
                 $plugins = Presets::WEB_PLUGINS;
         }
-
-        return new self(\array_map(function (string $plugin) {
-            return $plugin::getShortName();
-        }, $plugins));
+        /**
+         * TODO: fix this
+         */
+        return new self(\array_map(static fn(string $plugin) => $plugin::getShortName(), $plugins));
     }
 
     public function getPlugins(): array

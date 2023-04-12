@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of RoadRunner package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Repository;
@@ -20,7 +13,6 @@ use Spiral\RoadRunner\Console\Environment\Stability;
 final class ReleasesCollection extends Collection
 {
     /**
-     * @param string ...$constraints
      * @return $this
      */
     public function satisfies(string ...$constraints): self
@@ -35,7 +27,6 @@ final class ReleasesCollection extends Collection
     }
 
     /**
-     * @param string ...$constraints
      * @return $this
      */
     public function notSatisfies(string ...$constraints): self
@@ -87,19 +78,13 @@ final class ReleasesCollection extends Collection
     {
         $result = $this->items;
 
-        $sort = function (ReleaseInterface $a, ReleaseInterface $b): int {
-            return \version_compare($this->comparisonVersionString($b), $this->comparisonVersionString($a));
-        };
+        $sort = fn(ReleaseInterface $a, ReleaseInterface $b): int => \version_compare($this->comparisonVersionString($b), $this->comparisonVersionString($a));
 
         \uasort($result, $sort);
 
         return new self($result);
     }
 
-    /**
-     * @param ReleaseInterface $release
-     * @return string
-     */
     private function comparisonVersionString(ReleaseInterface $release): string
     {
         $stability = $release->getStability();
@@ -135,8 +120,7 @@ final class ReleasesCollection extends Collection
     {
         $weight = Stability::toInt($stability);
 
-        return $this->filter(function (ReleaseInterface $release) use ($weight): bool {
-            return Stability::toInt($release->getStability()) >= $weight;
-        });
+        return $this->filter(static fn(ReleaseInterface $release): bool => Stability::toInt($release->getStability())
+        >= $weight);
     }
 }

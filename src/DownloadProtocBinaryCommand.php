@@ -27,11 +27,11 @@ final class DownloadProtocBinaryCommand extends Command
 {
     private const ERROR_ENVIRONMENT = 'Could not find any available protoc-gen-php-grpc binary version which meets criterion (--%s=%s --%s=%s --%s=%s). Available: %s';
 
-    private OperatingSystemOption $os;
-    private ArchitectureOption $arch;
-    private VersionFilterOption $version;
-    private StabilityOption $stability;
-    private InstallationLocationOption $location;
+    private readonly OperatingSystemOption $os;
+    private readonly ArchitectureOption $arch;
+    private readonly VersionFilterOption $version;
+    private readonly StabilityOption $stability;
+    private readonly InstallationLocationOption $location;
 
     public function __construct(string $name = null)
     {

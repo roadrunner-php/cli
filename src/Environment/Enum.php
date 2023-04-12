@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of RoadRunner package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Environment;
@@ -19,7 +12,6 @@ final class Enum
 {
     /**
      * @param class-string $class
-     * @param string $prefix
      * @return array<string, string|int>
      */
     public static function values(string $class, string $prefix): array
@@ -28,7 +20,7 @@ final class Enum
 
         try {
             $reflection = new \ReflectionClass($class);
-        } catch (\ReflectionException $e) {
+        } catch (\ReflectionException) {
             return [];
         }
 
