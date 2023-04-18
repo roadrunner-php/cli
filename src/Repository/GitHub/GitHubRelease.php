@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of RoadRunner package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Repository\GitHub;
@@ -27,32 +20,18 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class GitHubRelease extends Release
 {
     /**
-     * @var HttpClientInterface
-     */
-    private HttpClientInterface $client;
-
-    /**
-     * @param HttpClientInterface $client
-     * @param string $name
-     * @param string $version
-     * @param string $repository
      * @param iterable|array $assets
      */
     public function __construct(
-        HttpClientInterface $client,
+        private readonly HttpClientInterface $client,
         string $name,
         string $version,
         string $repository,
         iterable $assets = []
     ) {
-        $this->client = $client;
-
         parent::__construct($name, $version, $repository, $assets);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getConfig(): string
     {
         $config = \vsprintf('https://raw.githubusercontent.com/%s/%s/.rr.yaml', [
@@ -66,10 +45,7 @@ final class GitHubRelease extends Release
     }
 
     /**
-     * @param GitHubRepository $repository
-     * @param HttpClientInterface $client
      * @param GitHubReleaseApiResponse $release
-     * @return static
      */
     public static function fromApiResponse(GitHubRepository $repository, HttpClientInterface $client, array $release): self
     {
@@ -98,7 +74,6 @@ final class GitHubRelease extends Release
      * tag physically exists.
      *
      * @param array { tag_name: string, name: string } $release
-     * @return string
      */
     private static function getTagName(array $release): string
     {
@@ -106,10 +81,10 @@ final class GitHubRelease extends Release
 
         try {
             return $parser->normalize($release['tag_name']);
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             try {
                 return $parser->normalize($release['name']);
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
                 return 'dev-' . $release['tag_name'];
             }
         }

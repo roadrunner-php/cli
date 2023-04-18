@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of RoadRunner package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Repository;
@@ -22,16 +15,11 @@ namespace Spiral\RoadRunner\Console\Repository;
 abstract class Collection implements \IteratorAggregate, \Countable
 {
     /**
-     * @var array<T>
-     */
-    protected array $items;
-
-    /**
      * @param array<T> $items
      */
-    final public function __construct(array $items)
-    {
-        $this->items = $items;
+    final public function __construct(
+        protected array $items,
+    ) {
     }
 
     /**
@@ -61,7 +49,6 @@ abstract class Collection implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @param \Closure $generator
      * @return static
      */
     public static function from(\Closure $generator): self
@@ -122,24 +109,17 @@ abstract class Collection implements \IteratorAggregate, \Countable
         return $this->first($filter) ?? $otherwise();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getIterator(): \Traversable
     {
         return new \ArrayIterator($this->items);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function count(): int
     {
         return \count($this->items);
     }
 
     /**
-     * @param callable $then
      * @return $this
      */
     public function whenEmpty(callable $then): self
@@ -151,9 +131,6 @@ abstract class Collection implements \IteratorAggregate, \Countable
         return $this;
     }
 
-    /**
-     * @return bool
-     */
     public function empty(): bool
     {
         return $this->items === [];

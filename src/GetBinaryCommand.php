@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of RoadRunner package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console;
@@ -32,41 +25,16 @@ use Symfony\Component\Console\Style\StyleInterface;
 
 class GetBinaryCommand extends Command
 {
-    /**
-     * @var string
-     */
     private const ERROR_ENVIRONMENT =
         'Could not find any available RoadRunner binary version which meets criterion (--%s=%s --%s=%s --%s=%s). ' .
         'Available: %s';
 
-    /**
-     * @var OperatingSystemOption
-     */
-    private OperatingSystemOption $os;
+    private readonly OperatingSystemOption $os;
+    private readonly ArchitectureOption $arch;
+    private readonly VersionFilterOption $version;
+    private readonly StabilityOption $stability;
+    private readonly InstallationLocationOption $location;
 
-    /**
-     * @var ArchitectureOption
-     */
-    private ArchitectureOption $arch;
-
-    /**
-     * @var VersionFilterOption
-     */
-    private VersionFilterOption $version;
-
-    /**
-     * @var StabilityOption
-     */
-    private StabilityOption $stability;
-
-    /**
-     * @var InstallationLocationOption
-     */
-    private InstallationLocationOption $location;
-
-    /**
-     * @param string|null $name
-     */
     public function __construct(string $name = null)
     {
         parent::__construct($name ?? 'get-binary');
@@ -102,16 +70,12 @@ class GetBinaryCommand extends Command
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getDescription(): string
     {
         return 'Install or update RoadRunner binary';
     }
 
     /**
-     * {@inheritDoc}
      * @throws \Throwable
      */
     public function execute(InputInterface $input, OutputInterface $output): int
@@ -179,12 +143,6 @@ class GetBinaryCommand extends Command
     }
 
     /**
-     * @param string $target
-     * @param ReleaseInterface $release
-     * @param AssetInterface $asset
-     * @param StyleInterface $io
-     * @param OutputInterface $out
-     * @return \SplFileInfo|null
      * @throws \Throwable
      */
     private function installBinary(
@@ -228,6 +186,7 @@ class GetBinaryCommand extends Command
 
     private function installConfig(string $to, InputInterface $in, StyleInterface $io): bool
     {
+        $config = null;
         $to .= '/.rr.yaml';
 
         if (\is_file($to) || \is_file(\getcwd().'/.rr.yaml')) {
@@ -254,11 +213,6 @@ class GetBinaryCommand extends Command
         return true;
     }
 
-    /**
-     * @param \SplFileInfo $bin
-     * @param StyleInterface $io
-     * @return bool
-     */
     private function checkExisting(\SplFileInfo $bin, StyleInterface $io): bool
     {
         if (\is_file($bin->getPathname())) {
@@ -275,10 +229,6 @@ class GetBinaryCommand extends Command
     }
 
     /**
-     * @param RepositoryInterface $repo
-     * @param ReleasesCollection $releases
-     * @param InputInterface $in
-     * @param StyleInterface $io
      * @return array{0: AssetInterface, 1: ReleaseInterface}
      */
     private function findAsset(
@@ -332,10 +282,7 @@ class GetBinaryCommand extends Command
     }
 
     /**
-     * @param AssetInterface $asset
-     * @param OutputInterface $out
      * @param string|null $temp
-     * @return ArchiveInterface
      * @throws \Throwable
      */
     private function assetToArchive(AssetInterface $asset, OutputInterface $out, string $temp = null): ArchiveInterface

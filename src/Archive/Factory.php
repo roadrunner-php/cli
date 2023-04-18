@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of RoadRunner package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Archive;
@@ -23,17 +16,11 @@ class Factory implements FactoryInterface
      */
     private array $matchers = [];
 
-    /**
-     * FactoryTrait constructor.
-     */
     public function __construct()
     {
         $this->bootDefaultMatchers();
     }
 
-    /**
-     * @return void
-     */
     private function bootDefaultMatchers(): void
     {
         $this->extend($this->matcher('zip',
@@ -50,7 +37,6 @@ class Factory implements FactoryInterface
     }
 
     /**
-     * @param string $extension
      * @param ArchiveMatcher $then
      * @return ArchiveMatcher
      */
@@ -61,9 +47,6 @@ class Factory implements FactoryInterface
         ;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function extend(\Closure $matcher): self
     {
         \array_unshift($this->matchers, $matcher);
@@ -71,10 +54,6 @@ class Factory implements FactoryInterface
         return $this;
     }
 
-    /**
-     * @param \SplFileInfo $file
-     * @return ArchiveInterface
-     */
     public function create(\SplFileInfo $file): ArchiveInterface
     {
         $errors = [];
@@ -97,9 +76,6 @@ class Factory implements FactoryInterface
         throw new \InvalidArgumentException($error);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function fromAsset(AssetInterface $asset, \Closure $progress = null, string $temp = null): ArchiveInterface
     {
         $temp = $this->getTempDirectory($temp) . '/' . $asset->getName();
@@ -119,10 +95,6 @@ class Factory implements FactoryInterface
         return $this->create($file);
     }
 
-    /**
-     * @param string|null $temp
-     * @return string
-     */
     private function getTempDirectory(?string $temp): string
     {
         if ($temp) {

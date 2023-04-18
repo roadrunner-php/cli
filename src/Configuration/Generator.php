@@ -49,8 +49,8 @@ class Generator
     /** @psalm-return non-empty-array<SectionInterface> */
     protected function fromSection(SectionInterface $section): void
     {
-        if (!isset($this->sections[\get_class($section)])) {
-            $this->sections[\get_class($section)] = $section;
+        if (!isset($this->sections[$section::class])) {
+            $this->sections[$section::class] = $section;
         }
 
         foreach ($section->getRequired() as $required) {
