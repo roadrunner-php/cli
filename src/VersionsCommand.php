@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of RoadRunner package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console;
@@ -24,29 +17,11 @@ use Symfony\Component\Console\Style\StyleInterface;
 
 class VersionsCommand extends Command
 {
-    /**
-     * @var OperatingSystemOption
-     */
-    private OperatingSystemOption $os;
+    private readonly OperatingSystemOption $os;
+    private readonly ArchitectureOption $arch;
+    private readonly VersionFilterOption $version;
+    private readonly StabilityOption $stability;
 
-    /**
-     * @var ArchitectureOption
-     */
-    private ArchitectureOption $arch;
-
-    /**
-     * @var VersionFilterOption
-     */
-    private VersionFilterOption $version;
-
-    /**
-     * @var StabilityOption
-     */
-    private StabilityOption $stability;
-
-    /**
-     * @param string|null $name
-     */
     public function __construct(string $name = null)
     {
         parent::__construct($name ?? 'versions');
@@ -63,17 +38,11 @@ class VersionsCommand extends Command
         };
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getDescription(): string
     {
         return 'Returns a list of all available RoadRunner versions';
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = $this->io($input, $output);
@@ -108,12 +77,6 @@ class VersionsCommand extends Command
         return 0;
     }
 
-    /**
-     * @param ReleaseInterface $release
-     * @param InputInterface $input
-     * @param StyleInterface $io
-     * @return string
-     */
     private function compatibilityToString(ReleaseInterface $release, InputInterface $input, StyleInterface $io): string
     {
         $template = '<fg=red> ✖ </> (reason: <comment>%s</comment>)';
@@ -151,45 +114,24 @@ class VersionsCommand extends Command
         return '<fg=green> ✓ </>';
     }
 
-    /**
-     * @param ReleaseInterface $release
-     * @return string
-     */
     private function versionToString(ReleaseInterface $release): string
     {
         return $release->getName();
     }
 
-    /**
-     * @param ReleaseInterface $release
-     * @return string
-     */
     private function stabilityToString(ReleaseInterface $release): string
     {
         $stability = $release->getStability();
 
-        switch ($stability) {
-            case Stability::STABILITY_STABLE:
-                return "<fg=green> $stability </>";
-
-            case Stability::STABILITY_RC:
-                return "<fg=blue> $stability </>";
-
-            case Stability::STABILITY_BETA:
-                return "<fg=yellow> $stability </>";
-
-            case Stability::STABILITY_ALPHA:
-                return "<fg=red> $stability </>";
-
-            default:
-                return "<bg=red;bg=white> $stability </>";
-        }
+        return match ($stability) {
+            Stability::STABILITY_STABLE => "<fg=green> $stability </>",
+            Stability::STABILITY_RC => "<fg=blue> $stability </>",
+            Stability::STABILITY_BETA => "<fg=yellow> $stability </>",
+            Stability::STABILITY_ALPHA => "<fg=red> $stability </>",
+            default => "<bg=red;bg=white> $stability </>",
+        };
     }
 
-    /**
-     * @param ReleaseInterface $release
-     * @return string
-     */
     private function assetsToString(ReleaseInterface $release): string
     {
         $count = $release->getAssets()

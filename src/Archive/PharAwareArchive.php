@@ -1,26 +1,13 @@
 <?php
 
-/**
- * This file is part of RoadRunner package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Archive;
 
 abstract class PharAwareArchive extends Archive
 {
-    /**
-     * @var \PharData
-     */
     protected \PharData $archive;
 
-    /**
-     * @param \SplFileInfo $archive
-     */
     public function __construct(\SplFileInfo $archive)
     {
         parent::__construct($archive);
@@ -28,10 +15,6 @@ abstract class PharAwareArchive extends Archive
         $this->archive = $this->open($archive);
     }
 
-    /**
-     * @param \SplFileInfo $file
-     * @return \PharData
-     */
     abstract protected function open(\SplFileInfo $file): \PharData;
 
     /**

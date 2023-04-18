@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of RoadRunner package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Repository\GitHub;
@@ -23,27 +16,16 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class GitHubAsset extends Asset
 {
-    /**
-     * @var HttpClientInterface
-     */
-    private HttpClientInterface $client;
-
-    /**
-     * @param HttpClientInterface $client
-     * @param string $name
-     * @param string $uri
-     */
-    public function __construct(HttpClientInterface $client, string $name, string $uri)
-    {
-        $this->client = $client;
-
+    public function __construct(
+        private readonly HttpClientInterface $client,
+        string $name,
+        string $uri,
+    ) {
         parent::__construct($name, $uri);
     }
 
     /**
-     * @param HttpClientInterface $client
      * @param GitHubAssetApiResponse $asset
-     * @return static
      *
      * @psalm-suppress DocblockTypeContradiction
      */
@@ -67,7 +49,6 @@ final class GitHubAsset extends Asset
     }
 
     /**
-     * {@inheritDoc}
      * @throws ExceptionInterface
      */
     public function download(\Closure $progress = null): \Traversable

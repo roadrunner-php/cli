@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of RoadRunner package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Environment;
@@ -14,10 +7,7 @@ namespace Spiral\RoadRunner\Console\Environment;
 final class Environment
 {
     /**
-     * @param string $key
      * @param string|null $default
-     * @param array $variables
-     * @return string|null
      *
      * @psalm-return ($default is string ? string : string|null)
      */
