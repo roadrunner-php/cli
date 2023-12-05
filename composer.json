@@ -23,7 +23,7 @@
         "spiral/roadrunner-worker": ">=2.0.2",
         "spiral/tokenizer": "^2.13 || ^3.0",
         "symfony/console": "^5.3 || ^6.0 || ^7.0",
-        "symfony/http-client": "^4.4 || ^5.0 || ^6.0 || ^7.0",
+        "symfony/http-client": "^4.4.11 || ^5.0 || ^6.0 || ^7.0",
         "symfony/polyfill-php80": "^1.22",
         "symfony/yaml": "^5.4 || ^6.0 || ^7.0"
     },
