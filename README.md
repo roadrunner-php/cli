@@ -18,7 +18,7 @@ RoadRunner includes PSR-7/PSR-17 compatible HTTP and HTTP/2 server and can be us
 
 <p align="center">
 	<a href="https://roadrunner.dev/"><b>Official Website</b></a> | 
-	<a href="https://roadrunner.dev/docs"><b>Documentation</b></a>
+	<a href="https://docs.roadrunner.dev"><b>Documentation</b></a>
 </p>
 
 ## RoadRunner CLI
