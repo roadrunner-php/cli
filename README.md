@@ -47,7 +47,7 @@ This repository contains commands to help you work with the RoadRunner, such as:
 Testing:
 --------
 
-This codebase is automatically tested via host repository - [spiral/roadrunner](https://github.com/spiral/roadrunner).
+This codebase is automatically tested via host repository - [roadrunner-server/roadrunner](https://github.com/roadrunner-server/roadrunner).
 
 License:
 --------
