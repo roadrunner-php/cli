@@ -54,7 +54,7 @@ final class VersionSelectionTest
 
     #[DataSet(['rc'])]
     #[DataSet(['beta'])]
-    #[Skip('Releases tagged "-rc.N" sort below "-beta.N" (the sort key only rewrites the "-RC" spelling), and a lowercase --stability=rc means "dev"')]
+    #[Skip('-rc tags sort below -beta ones and --stability=rc means dev, see https://github.com/roadrunner-php/cli/issues/58 and https://github.com/roadrunner-php/cli/issues/67')]
     public function prefersReleaseCandidateOverOlderBeta(string $stability): void
     {
         $result = $this->rr()->run(['get', '--stability=' . $stability, '--os=linux', '--arch=amd64']);

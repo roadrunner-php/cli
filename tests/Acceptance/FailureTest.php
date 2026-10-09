@@ -69,7 +69,7 @@ final class FailureTest
 
     #[DataSet([['--os=plan9']], 'operating system')]
     #[DataSet([['--arch=sparc']], 'architecture')]
-    #[Skip('An unknown --os or --arch is only a warning: the releases are still fetched before the command fails')]
+    #[Skip('An unknown --os or --arch still fetches the releases, see https://github.com/roadrunner-php/cli/issues/68')]
     public function rejectsUnknownPlatformWithoutRequests(array $options): void
     {
         $result = $this->rr()->run([...self::ARGS, ...$options]);

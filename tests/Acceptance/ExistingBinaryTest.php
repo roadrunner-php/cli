@@ -43,7 +43,7 @@ final class ExistingBinaryTest
 
     #[DataSet([null], 'no interaction')]
     #[DataSet([['no']], 'declined')]
-    #[Skip('A skipped installation exits with 0 and reports "Your project is now ready"')]
+    #[Skip('A kept binary exits with 0 and reports success, see https://github.com/roadrunner-php/cli/issues/69')]
     public function failsWhenBinaryIsKept(?array $answers): void
     {
         $this->dir->write('rr', self::OLD);
