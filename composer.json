@@ -42,6 +42,7 @@
         "jetbrains/phpstorm-attributes": "^1.2",
         "spiral/code-style": "^2.3.1",
         "spiral/dumper": "^3.3",
+        "testo/testo": "^0.10.55",
         "vimeo/psalm": "^6 || ^7"
     },
     "autoload": {
@@ -49,11 +50,17 @@
             "Spiral\\RoadRunner\\Console\\": "src"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Spiral\\RoadRunner\\Console\\Tests\\": "tests"
+        }
+    },
     "scripts": {
         "cs:diff": "php-cs-fixer fix --dry-run -v --diff",
         "cs:fix": "php-cs-fixer fix -v",
         "psalm": "psalm",
-        "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml"
+        "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
+        "test": "vendor/bin/testo"
     },
     "config": {
         "sort-packages": true,
