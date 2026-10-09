@@ -8,3 +8,4 @@
 /*.lock  export-ignore
 /*.dist  export-ignore
 /*.php   export-ignore
+/infection.json5 export-ignore

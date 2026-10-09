@@ -16,6 +16,9 @@
 >
     <issueHandlers>
         <MissingClassConstType errorLevel="suppress" />
+        <!-- Psalm 6 reports; temporarily suppressed until the static analysis pass -->
+        <MissingOverrideAttribute errorLevel="suppress" />
+        <ClassMustBeFinal errorLevel="suppress" />
     </issueHandlers>
     <projectFiles>
         <directory name="src" />
