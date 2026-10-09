@@ -18,6 +18,9 @@ final class DLoadGetSpy extends Command
     /** @var list<InputInterface> */
     public array $calls = [];
 
+    /** @var list<string> Contents of the `--config` file at the time of each call. */
+    public array $configs = [];
+
     public function __construct(
         private readonly int $exitCode = self::SUCCESS,
         private readonly string $binary = 'rr',
@@ -33,6 +36,7 @@ final class DLoadGetSpy extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->calls[] = $input;
+        $this->configs[] = (string) @\file_get_contents((string) $input->getOption('config'));
 
         if ($this->exitCode === self::SUCCESS) {
             \file_put_contents($input->getOption('path') . '/' . $this->binary, 'new binary');

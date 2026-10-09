@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Spiral\RoadRunner\Console\Downloader;
 
 use Internal\DLoad\Command\Get;
+use Spiral\RoadRunner\Console\Environment\Environment;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -29,15 +30,43 @@ final class DLoadDownloader
      */
     private const CONFIG = __DIR__ . '/../../resources/dload.xml';
 
+    /**
+     * Not `GITHUB_API_URL`: GitHub Actions sets that one in every job.
+     */
+    private const ENV_GITHUB_API_URL = 'RR_GITHUB_API_URL';
+
+    /**
+     * The RoadRunner entries of DLoad's built-in registry, with the API host to substitute.
+     */
+    private const CONFIG_WITH_HOST = <<<'XML'
+        <?xml version="1.0"?>
+        <dload>
+            <registry overwrite="false">
+                <software name="RoadRunner" alias="rr">
+                    <repository type="github" uri="roadrunner-server/roadrunner" host="%1$s" asset-pattern="/^roadrunner-.*/"/>
+                    <binary name="rr" pattern="/^(roadrunner|rr)(?:\.exe)?$/" version-command="--version"/>
+                </software>
+                <software name="ProtoC PHP gRPC Plugin" alias="protoc-gen-php-grpc">
+                    <repository type="github" uri="roadrunner-server/roadrunner" host="%1$s" asset-pattern="/^protoc-gen-php-grpc-.*/"/>
+                    <binary name="protoc-gen-php-grpc"/>
+                </software>
+            </registry>
+        </dload>
+        XML;
+
     private readonly Command $get;
+    private readonly ?string $githubApiUrl;
 
     /**
      * @param Command|null $get Runs the download with the input of DLoad's `get` command; DLoad's own command by default.
+     * @param string|null $githubApiUrl Base URL of the GitHub API to fetch releases from; the RR_GITHUB_API_URL
+     *        environment variable by default, and DLoad's own default when that is not set either.
      */
-    public function __construct(?Command $get = null)
+    public function __construct(?Command $get = null, ?string $githubApiUrl = null)
     {
         /** @psalm-suppress InternalClass DLoad has no public PHP API yet; its `get` command is the stable contract */
         $this->get = $get ?? new Get();
+        $this->githubApiUrl = $githubApiUrl ?? Environment::get(self::ENV_GITHUB_API_URL);
     }
 
     /**
@@ -58,9 +87,11 @@ final class DLoadDownloader
         bool $force,
         OutputInterface $output,
     ): int {
+        $config = $this->createConfig();
+
         $input = new ArrayInput([
             'software' => [$software . self::versionSuffix($constraint, $stability)],
-            '--config' => self::CONFIG,
+            '--config' => $config ?? self::CONFIG,
             '--path' => $location,
             '--os' => $os,
             '--arch' => $arch,
@@ -71,7 +102,13 @@ final class DLoadDownloader
         ]);
         $input->setInteractive(false);
 
-        return $this->get->run($input, $output);
+        try {
+            return $this->get->run($input, $output);
+        } finally {
+            if ($config !== null) {
+                @\unlink($config);
+            }
+        }
     }
 
     /**
@@ -87,5 +124,44 @@ final class DLoadDownloader
         }
 
         return ':' . (\str_contains($constraint, '@') ? $constraint : $constraint . '@' . $stability);
+    }
+
+    /**
+     * DLoad takes a bare host name for `repository.host`: the scheme and the path of the URL are dropped,
+     * a port is kept.
+     *
+     * @return non-empty-string
+     */
+    private static function host(string $url): string
+    {
+        $parts = \parse_url(\str_contains($url, '://') ? $url : 'https://' . $url);
+        $host = \is_array($parts) ? ($parts['host'] ?? '') : '';
+
+        if ($host === '') {
+            throw new \InvalidArgumentException(\sprintf('Invalid %s value "%s"', self::ENV_GITHUB_API_URL, $url));
+        }
+
+        return isset($parts['port']) ? $host . ':' . $parts['port'] : $host;
+    }
+
+    /**
+     * @return string|null Path to a temporary config pointing DLoad at the GitHub API host, if one is set.
+     */
+    private function createConfig(): ?string
+    {
+        if ($this->githubApiUrl === null || $this->githubApiUrl === '') {
+            return null;
+        }
+
+        $host = \htmlspecialchars(self::host($this->githubApiUrl), \ENT_XML1 | \ENT_QUOTES);
+
+        $file = \tempnam(\sys_get_temp_dir(), 'rr-dload-');
+        if ($file === false) {
+            throw new \RuntimeException('Can not create a temporary DLoad config');
+        }
+
+        \file_put_contents($file, \sprintf(self::CONFIG_WITH_HOST, $host));
+
+        return $file;
     }
 }
