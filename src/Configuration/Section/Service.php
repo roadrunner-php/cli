@@ -8,11 +8,13 @@ final class Service extends AbstractSection
 {
     private const NAME = 'service';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [

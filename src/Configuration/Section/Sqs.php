@@ -8,11 +8,13 @@ final class Sqs extends AbstractSection
 {
     private const NAME = 'sqs';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [

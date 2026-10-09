@@ -8,11 +8,13 @@ final class Boltdb extends AbstractSection
 {
     private const NAME = 'boltdb';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [

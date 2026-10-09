@@ -28,10 +28,10 @@ class VersionFilterOption extends Option
 
     public function choices(ReleasesCollection $releases): string
     {
-        $versions = $releases
-            ->map(static fn(ReleaseInterface $release): string => $release->getVersion())
-            ->toArray()
-        ;
+        $versions = \array_map(
+            static fn(ReleaseInterface $release): string => $release->getVersion(),
+            $releases->toArray(),
+        );
 
         return \implode(', ', \array_unique($versions));
     }
@@ -53,11 +53,13 @@ class VersionFilterOption extends Option
         return $filtered;
     }
 
+    #[\Override]
     protected function getDescription(): string
     {
         return 'Required version of RoadRunner binaries';
     }
 
+    #[\Override]
     protected function default(): string
     {
         return RoadRunnerVersion::constraint();

@@ -9,11 +9,13 @@ final class Version extends AbstractSection
     private const NAME = 'version';
     private const CONFIG_VERSION = '3';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [

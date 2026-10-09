@@ -8,11 +8,13 @@ final class Reload extends AbstractSection
 {
     private const NAME = 'reload';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [

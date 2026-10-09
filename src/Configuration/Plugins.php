@@ -18,7 +18,7 @@ use Symfony\Component\Finder\Finder;
 final class Plugins
 {
     /**
-     * @psalm-var array<class-string>
+     * @psalm-var list<class-string<SectionInterface>>
      *
      * Default plugins in a class-string format.
      */
@@ -40,18 +40,24 @@ final class Plugins
     private array $requestedPlugins;
 
     /**
-     * @psalm-var non-empty-array<class-string<SectionInterface>>
+     * @psalm-var list<class-string<SectionInterface>>
      *
      * All plugins.
      */
     private array $available;
 
+    /**
+     * @param string[] $plugins
+     */
     private function __construct(array $plugins)
     {
         $this->available = $this->getAvailable();
         $this->requestedPlugins = $plugins;
     }
 
+    /**
+     * @param string[] $plugins Plugin short names.
+     */
     public static function fromPlugins(array $plugins): self
     {
         return new self($plugins);
@@ -70,6 +76,9 @@ final class Plugins
         }, $plugins));
     }
 
+    /**
+     * @return list<class-string<SectionInterface>>
+     */
     public function getPlugins(): array
     {
         if ($this->requestedPlugins === []) {
@@ -86,6 +95,9 @@ final class Plugins
         return $plugins;
     }
 
+    /**
+     * @return list<class-string<SectionInterface>>
+     */
     private function getAvailable(): array
     {
         $finder = new Finder();
@@ -93,11 +105,12 @@ final class Plugins
 
         $locator = new ClassLocator($finder);
 
-        /** @var SectionInterface[] $available */
         $available = [];
         foreach ($locator->getClasses() as $class) {
             if ($this->isPlugin($class)) {
-                $available[] = $class->getName();
+                /** @var class-string<SectionInterface> $name */
+                $name = $class->getName();
+                $available[] = $name;
             }
         }
 

@@ -53,7 +53,7 @@ final class Stability
     ];
 
     /**
-     * @param StabilityType $type
+     * @param StabilityType|string $type Unknown stabilities weigh as "dev".
      * @return positive-int|0
      */
     public static function toInt(string $type): int
