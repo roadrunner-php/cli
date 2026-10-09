@@ -145,9 +145,6 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$this->stability->get($input, $io)]]></code>
     </ArgumentTypeCoercion>
-    <PossiblyInvalidArgument>
-      <code><![CDATA[$release->getAssets()]]></code>
-    </PossiblyInvalidArgument>
     <PossiblyInvalidMethodCall>
       <code><![CDATA[count]]></code>
       <code><![CDATA[empty]]></code>
