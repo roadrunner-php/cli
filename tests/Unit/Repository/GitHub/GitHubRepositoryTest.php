@@ -40,9 +40,25 @@ final class GitHubRepositoryTest
 
         Assert::same(Releases::versions($releases), ['v2024.2.0', 'v2024.1.0']);
         Assert::same($requests, [
-            ['GET', 'https://api.github.com/repos/roadrunner-server/roadrunner/releases?page=1', 'accept: application/vnd.github.v3+json'],
-            ['GET', 'https://api.github.com/repos/roadrunner-server/roadrunner/releases?page=2', 'accept: application/vnd.github.v3+json'],
+            ['GET', 'https://api.github.com/repos/roadrunner-server/roadrunner/releases?page=1&per_page=100', 'accept: application/vnd.github.v3+json'],
+            ['GET', 'https://api.github.com/repos/roadrunner-server/roadrunner/releases?page=2&per_page=100', 'accept: application/vnd.github.v3+json'],
         ]);
+    }
+
+    public function getReleasesUsesCustomApiUrl(): void
+    {
+        $urls = [];
+        $client = new MockHttpClient(static function (string $method, string $url) use (&$urls): MockResponse {
+            $urls[] = $url;
+
+            return new MockResponse('[]');
+        });
+
+        GitHubRepository::create('roadrunner-server', 'roadrunner', $client, 'http://127.0.0.1:8080/api/v3/')
+            ->getReleases()
+            ->empty();
+
+        Assert::same($urls, ['http://127.0.0.1:8080/api/v3/repos/roadrunner-server/roadrunner/releases?page=1&per_page=100']);
     }
 
     public function getReleasesStopsWithoutLinkHeader(): void
