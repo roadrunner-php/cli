@@ -72,4 +72,4 @@ See the [RoadRunner documentation](https://docs.roadrunner.dev) for the configur
 
 ### Common options
 
-The binary commands accept `--filter` (`-f`, version constraint), `--stability` (`-s`), `--os` (`-o`), `--arch` (`-a`) and `--location` (`-l`, target directory) options. Releases are fetched from the GitHub API; set the `GITHUB_TOKEN` environment variable to avoid its rate limits. `get-binary` and `download-protoc-binary` download the binaries with [DLoad](https://github.com/php-internal/dload); a project's `dload.xml` does not affect them.
+The binary commands accept `--filter` (`-f`, version constraint), `--stability` (`-s`), `--os` (`-o`), `--arch` (`-a`) and `--location` (`-l`, target directory) options. Releases are fetched from the GitHub API; set the `GITHUB_TOKEN` environment variable to avoid its rate limits, and `RR_GITHUB_API_URL` to use another API endpoint (GitHub Enterprise, a mirror; defaults to `https://api.github.com`). `get-binary` and `download-protoc-binary` download the binaries with [DLoad](https://github.com/php-internal/dload); a project's `dload.xml` does not affect them.

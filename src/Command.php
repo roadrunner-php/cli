@@ -31,9 +31,17 @@ abstract class Command extends BaseCommand
      */
     private const ENV_GITHUB_TOKEN = 'GITHUB_TOKEN';
 
+    /**
+     * Not `GITHUB_API_URL`: GitHub Actions sets that one in every job.
+     *
+     * @var string
+     */
+    private const ENV_GITHUB_API_URL = 'RR_GITHUB_API_URL';
+
     protected function getRepository(): RepositoryInterface
     {
         $token = Environment::get(self::ENV_GITHUB_TOKEN);
+        $apiUrl = Environment::get(self::ENV_GITHUB_API_URL);
 
         $client = HttpClient::create([
             'headers' => \array_filter([
@@ -42,7 +50,12 @@ abstract class Command extends BaseCommand
         ]);
 
         return new RepositoriesCollection([
-            GitHubRepository::create('roadrunner-server', 'roadrunner', $client),
+            GitHubRepository::create(
+                'roadrunner-server',
+                'roadrunner',
+                $client,
+                $apiUrl !== null && $apiUrl !== '' ? $apiUrl : GitHubRepository::DEFAULT_API_URL,
+            ),
         ]);
     }
 

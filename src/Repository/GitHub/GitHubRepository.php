@@ -24,13 +24,21 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 final class GitHubRepository implements RepositoryInterface
 {
+    public const DEFAULT_API_URL = 'https://api.github.com';
+
     /**
      * @var string
      */
-    private const URL_RELEASES = 'https://api.github.com/repos/%s/releases';
+    private const URL_RELEASES = '%s/repos/%s/releases';
+
+    /**
+     * The largest page size GitHub accepts.
+     */
+    private const PER_PAGE = 100;
 
     private HttpClientInterface $client;
     private string $name;
+    private string $apiUrl;
 
     /**
      * @var array|string[]
@@ -39,15 +47,27 @@ final class GitHubRepository implements RepositoryInterface
         'accept' => 'application/vnd.github.v3+json',
     ];
 
-    public function __construct(string $owner, string $repository, ?HttpClientInterface $client = null)
-    {
+    /**
+     * @param string $apiUrl Base URL of the GitHub REST API: GitHub Enterprise, a mirror or a mock server.
+     */
+    public function __construct(
+        string $owner,
+        string $repository,
+        ?HttpClientInterface $client = null,
+        string $apiUrl = self::DEFAULT_API_URL,
+    ) {
         $this->name = $owner . '/' . $repository;
         $this->client = $client ?? HttpClient::create();
+        $this->apiUrl = \rtrim($apiUrl, '/');
     }
 
-    public static function create(string $owner, string $name, ?HttpClientInterface $client = null): GitHubRepository
-    {
-        return new GitHubRepository($owner, $name, $client);
+    public static function create(
+        string $owner,
+        string $name,
+        ?HttpClientInterface $client = null,
+        string $apiUrl = self::DEFAULT_API_URL,
+    ): GitHubRepository {
+        return new GitHubRepository($owner, $name, $client, $apiUrl);
     }
 
     /**
@@ -98,13 +118,14 @@ final class GitHubRepository implements RepositoryInterface
         return $this->request('GET', $this->uri(self::URL_RELEASES), [
             'query' => [
                 'page' => $page,
+                'per_page' => self::PER_PAGE,
             ],
         ]);
     }
 
     private function uri(string $pattern): string
     {
-        return \sprintf($pattern, $this->getName());
+        return \sprintf($pattern, $this->apiUrl, $this->getName());
     }
 
     /**
