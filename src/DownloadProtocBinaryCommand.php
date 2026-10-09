@@ -25,9 +25,11 @@ final class DownloadProtocBinaryCommand extends Command
     private VersionFilterOption $version;
     private StabilityOption $stability;
     private InstallationLocationOption $location;
+    private DLoadDownloader $downloader;
 
-    public function __construct(?string $name = null)
+    public function __construct(?string $name = null, ?DLoadDownloader $downloader = null)
     {
+        $this->downloader = $downloader ?? new DLoadDownloader();
         parent::__construct($name ?? 'download-protoc-binary');
 
         $this->os = new OperatingSystemOption($this);
@@ -65,7 +67,7 @@ final class DownloadProtocBinaryCommand extends Command
             return 1;
         }
 
-        return (new DLoadDownloader())->download(
+        return $this->downloader->download(
             software: 'protoc-gen-php-grpc',
             constraint: $this->version->get($input, $io),
             stability: $this->stability->get($input, $io),

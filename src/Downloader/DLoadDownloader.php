@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Spiral\RoadRunner\Console\Downloader;
 
 use Internal\DLoad\Command\Get;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -27,6 +28,17 @@ final class DLoadDownloader
      * would silently replace the version requested via `--filter`.
      */
     private const CONFIG = __DIR__ . '/../../resources/dload.xml';
+
+    private readonly Command $get;
+
+    /**
+     * @param Command|null $get Runs the download with the input of DLoad's `get` command; DLoad's own command by default.
+     */
+    public function __construct(?Command $get = null)
+    {
+        /** @psalm-suppress InternalClass DLoad has no public PHP API yet; its `get` command is the stable contract */
+        $this->get = $get ?? new Get();
+    }
 
     /**
      * @param non-empty-string $software DLoad software alias, e.g. "rr" or "protoc-gen-php-grpc".
@@ -59,8 +71,7 @@ final class DLoadDownloader
         ]);
         $input->setInteractive(false);
 
-        /** @psalm-suppress InternalClass DLoad has no public PHP API yet; its `get` command is the stable contract */
-        return (new Get())->run($input, $output);
+        return $this->get->run($input, $output);
     }
 
     /**

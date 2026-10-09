@@ -9,7 +9,6 @@ use Spiral\RoadRunner\Console\Repository\ReleasesCollection;
 use Spiral\RoadRunner\Console\Tests\Unit\Stub\Releases;
 use Testo\Assert;
 use Testo\Data\DataSet;
-use Testo\Skip;
 use Testo\Test;
 
 #[Test]
@@ -73,7 +72,6 @@ final class ReleasesCollectionTest
         );
     }
 
-    #[Skip('Bug: sortByVersion() replaces "-beta"/"-alpha"/"-RC" with a numeric weight, so v2024.1.0-beta.1 compares as 2024.1.0.2.1 and sorts above v2024.1.0')]
     public function sortByVersionPutsPreReleasesBelowFinalRelease(): void
     {
         $releases = Releases::collection('v2024.1.0-alpha.1', 'v2024.1.0', 'v2024.1.0-beta.1', 'v2024.1.0-rc.1');

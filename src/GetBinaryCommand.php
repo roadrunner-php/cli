@@ -32,9 +32,11 @@ class GetBinaryCommand extends Command
     private VersionFilterOption $version;
     private StabilityOption $stability;
     private InstallationLocationOption $location;
+    private DLoadDownloader $downloader;
 
-    public function __construct(?string $name = null)
+    public function __construct(?string $name = null, ?DLoadDownloader $downloader = null)
     {
+        $this->downloader = $downloader ?? new DLoadDownloader();
         parent::__construct($name ?? 'get-binary');
 
         $this->os = new OperatingSystemOption($this);
@@ -72,7 +74,7 @@ class GetBinaryCommand extends Command
         $installed = false;
 
         if ($this->checkExisting($binary, $io)) {
-            $code = (new DLoadDownloader())->download(
+            $code = $this->downloader->download(
                 software: 'rr',
                 constraint: $this->version->get($input, $io),
                 stability: $this->stability->get($input, $io),
