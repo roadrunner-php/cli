@@ -46,26 +46,12 @@
       <code><![CDATA[$this->getAvailable()]]></code>
     </MixedPropertyTypeCoercion>
   </file>
-  <file src="src/DownloadProtocBinaryCommand.php">
-    <ArgumentTypeCoercion>
-      <code><![CDATA[$stabilityOption]]></code>
-    </ArgumentTypeCoercion>
-    <PossiblyInvalidMethodCall>
-      <code><![CDATA[filter]]></code>
-    </PossiblyInvalidMethodCall>
-    <PossiblyNullArgument>
-      <code><![CDATA[$file]]></code>
-    </PossiblyNullArgument>
-  </file>
   <file src="src/Environment/OperatingSystem.php">
     <TooManyArguments>
       <code><![CDATA[createFromGlobals]]></code>
     </TooManyArguments>
   </file>
   <file src="src/GetBinaryCommand.php">
-    <ArgumentTypeCoercion>
-      <code><![CDATA[$stabilityOption]]></code>
-    </ArgumentTypeCoercion>
     <MixedArgument>
       <code><![CDATA[$in->getOption('plugin')]]></code>
       <code><![CDATA[$in->getOption('preset')]]></code>
@@ -73,19 +59,9 @@
     <PossiblyFalseOperand>
       <code><![CDATA[\getcwd()]]></code>
     </PossiblyFalseOperand>
-    <PossiblyInvalidMethodCall>
-      <code><![CDATA[onlyRoadrunner]]></code>
-    </PossiblyInvalidMethodCall>
-    <PossiblyNullArgument>
-      <code><![CDATA[$file]]></code>
-    </PossiblyNullArgument>
     <PossiblyUndefinedVariable>
       <code><![CDATA[$config]]></code>
     </PossiblyUndefinedVariable>
-    <UnnecessaryVarAnnotation>
-      <code><![CDATA[AssetInterface]]></code>
-      <code><![CDATA[ReleaseInterface]]></code>
-    </UnnecessaryVarAnnotation>
   </file>
   <file src="src/MakeConfigCommand.php">
     <MixedArgument>

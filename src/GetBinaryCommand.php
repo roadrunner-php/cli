@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console;
 
-use Spiral\RoadRunner\Console\Archive\ArchiveInterface;
-use Spiral\RoadRunner\Console\Archive\Factory;
 use Spiral\RoadRunner\Console\Command\ArchitectureOption;
 use Spiral\RoadRunner\Console\Command\InstallationLocationOption;
 use Spiral\RoadRunner\Console\Command\OperatingSystemOption;
@@ -20,11 +18,8 @@ use Spiral\RoadRunner\Console\Command\StabilityOption;
 use Spiral\RoadRunner\Console\Command\VersionFilterOption;
 use Spiral\RoadRunner\Console\Configuration\Generator;
 use Spiral\RoadRunner\Console\Configuration\Plugins;
-use Spiral\RoadRunner\Console\Repository\AssetInterface;
-use Spiral\RoadRunner\Console\Repository\ReleaseInterface;
-use Spiral\RoadRunner\Console\Repository\ReleasesCollection;
-use Spiral\RoadRunner\Console\Repository\RepositoryInterface;
-use Symfony\Component\Console\Helper\ProgressBar;
+use Spiral\RoadRunner\Console\Downloader\DLoadDownloader;
+use Spiral\RoadRunner\Console\Environment\OperatingSystem;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -32,13 +27,6 @@ use Symfony\Component\Console\Style\StyleInterface;
 
 class GetBinaryCommand extends Command
 {
-    /**
-     * @var string
-     */
-    private const ERROR_ENVIRONMENT =
-        'Could not find any available RoadRunner binary version which meets criterion (--%s=%s --%s=%s --%s=%s). ' .
-        'Available: %s';
-
     private OperatingSystemOption $os;
     private ArchitectureOption $arch;
     private VersionFilterOption $version;
@@ -70,50 +58,47 @@ class GetBinaryCommand extends Command
         $io = $this->io($input, $output);
 
         $target = $this->location->get($input, $io);
-        $repository = $this->getRepository();
+        $os = $this->os->get($input, $io);
 
         $output->writeln('');
         $output->writeln(' Environment:');
         $output->writeln(\sprintf('   - Version:          <info>%s</info>', $this->version->get($input, $io)));
         $output->writeln(\sprintf('   - Stability:        <info>%s</info>', $this->stability->get($input, $io)));
-        $output->writeln(\sprintf('   - Operating System: <info>%s</info>', $this->os->get($input, $io)));
+        $output->writeln(\sprintf('   - Operating System: <info>%s</info>', $os));
         $output->writeln(\sprintf('   - Architecture:     <info>%s</info>', $this->arch->get($input, $io)));
         $output->writeln('');
 
+        $binary = $target . ($os === OperatingSystem::OS_WINDOWS ? '/rr.exe' : '/rr');
+        $installed = false;
 
-        // List of all available releases
-        $releases = $this->version->find($input, $io, $repository);
+        if ($this->checkExisting($binary, $io)) {
+            $code = (new DLoadDownloader())->download(
+                software: 'rr',
+                constraint: $this->version->get($input, $io),
+                stability: $this->stability->get($input, $io),
+                os: $os,
+                arch: $this->arch->get($input, $io),
+                location: $target,
+                force: true,
+                output: $output,
+            );
 
-        /**
-         * @var AssetInterface $asset
-         * @var ReleaseInterface $release
-         */
-        [$asset, $release] = $this->findAsset($repository, $releases, $input, $io);
+            if ($code !== self::SUCCESS) {
+                return $code;
+            }
 
-        // Installation
-        $output->writeln(
-            \sprintf("  - <info>%s</info>", $release->getRepositoryName()) .
-            \sprintf(' (<comment>%s</comment>):', $release->getVersion()) .
-            ' Downloading...',
-        );
-
-        if ($output->isVerbose()) {
-            $output->writeln(\sprintf("     -- <info>%s</info>", $asset->getName()));
+            $installed = true;
         }
-
-        // Install rr binary
-        $file = $this->installBinary($target, $release, $asset, $io, $output);
 
         $this->installConfig($target, $input, $io);
 
-        // Success
-        if ($file === null) {
+        if (! $installed) {
             $io->warning('RoadRunner has not been installed');
 
             return 1;
         }
 
-        $io->success('Your project is now ready in ' . $file->getPath());
+        $io->success('Your project is now ready in ' . $target);
 
         $io->title('Whats Next?');
         $io->listing([
@@ -123,7 +108,7 @@ class GetBinaryCommand extends Command
 
             // 2)
             'To run the application, use the following command: ' .
-            '<comment>$ ' . $file->getFilename() . ' serve</comment>',
+            '<comment>$ ' . \basename($binary) . ' serve</comment>',
         ]);
 
         return 0;
@@ -156,45 +141,6 @@ class GetBinaryCommand extends Command
     /**
      * @throws \Throwable
      */
-    private function installBinary(
-        string $target,
-        ReleaseInterface $release,
-        AssetInterface $asset,
-        StyleInterface $io,
-        OutputInterface $out,
-    ): ?\SplFileInfo {
-        $extractor = $this->assetToArchive($asset, $out)
-            ->extract([
-                'rr.exe' => $target . '/rr.exe',
-                'rr'     => $target . '/rr',
-            ])
-        ;
-
-        $file = null;
-        while ($extractor->valid()) {
-            $file = $extractor->current();
-
-            if (! $this->checkExisting($file, $io)) {
-                $extractor->send(false);
-                continue;
-            }
-
-            // Success
-            $path = $file->getRealPath() ?: $file->getPathname();
-            $message = 'RoadRunner (<comment>%s</comment>) has been installed into <info>%s</info>';
-            $message = \sprintf($message, $release->getVersion(), $path);
-            $out->writeln($message);
-
-            $extractor->next();
-
-            if (! $file->isExecutable()) {
-                @\chmod($file->getRealPath(), 0755);
-            }
-        }
-
-        return $file;
-    }
-
     private function installConfig(string $to, InputInterface $in, StyleInterface $io): bool
     {
         $to .= '/.rr.yaml';
@@ -223,9 +169,9 @@ class GetBinaryCommand extends Command
         return true;
     }
 
-    private function checkExisting(\SplFileInfo $bin, StyleInterface $io): bool
+    private function checkExisting(string $binary, StyleInterface $io): bool
     {
-        if (\is_file($bin->getPathname())) {
+        if (\is_file($binary)) {
             $io->warning('RoadRunner binary file already exists!');
 
             if (! $io->confirm('Do you want overwrite it?', false)) {
@@ -236,91 +182,5 @@ class GetBinaryCommand extends Command
         }
 
         return true;
-    }
-
-    /**
-     * @return array{0: AssetInterface, 1: ReleaseInterface}
-     */
-    private function findAsset(
-        RepositoryInterface $repo,
-        ReleasesCollection $releases,
-        InputInterface $in,
-        StyleInterface $io,
-    ): array {
-        $osOption = $this->os->get($in, $io);
-        $archOption = $this->arch->get($in, $io);
-        $stabilityOption = $this->stability->get($in, $io);
-
-        /** @var ReleaseInterface[] $filtered */
-        $filtered = $releases
-            ->minimumStability($stabilityOption)
-            ->withAssets()
-        ;
-
-        foreach ($filtered as $release) {
-            $asset = $release->getAssets()
-                ->onlyRoadrunner()
-                ->exceptDebPackages()
-                ->whereArchitecture($archOption)
-                ->whereOperatingSystem($osOption)
-                ->first()
-            ;
-
-            if ($asset === null) {
-                $io->warning(\vsprintf('%s %s does not contain available assembly (further search in progress)', [
-                    $repo->getName(),
-                    $release->getVersion(),
-                ]));
-
-                continue;
-            }
-
-            return [$asset, $release];
-        }
-
-        $message = \vsprintf(self::ERROR_ENVIRONMENT, [
-            $this->os->getName(),
-            $osOption,
-            $this->arch->getName(),
-            $archOption,
-            $this->stability->getName(),
-            $stabilityOption,
-            $this->version->choices($releases),
-        ]);
-
-        throw new \UnexpectedValueException($message);
-    }
-
-    /**
-     * @throws \Throwable
-     */
-    private function assetToArchive(AssetInterface $asset, OutputInterface $out, ?string $temp = null): ArchiveInterface
-    {
-        $factory = new Factory();
-
-        $progress = new ProgressBar($out);
-        $progress->setFormat('  [%bar%] %percent:3s%% (%size%Kb/%total%Kb)');
-        $progress->setMessage('0.00', 'size');
-        $progress->setMessage('?.??', 'total');
-        $progress->display();
-
-        try {
-            return $factory->fromAsset($asset, static function (int $size, int $total) use ($progress): void {
-                if ($progress->getMaxSteps() !== $total) {
-                    $progress->setMaxSteps($total);
-                }
-
-                if ($progress->getStartTime() === 0) {
-                    $progress->start();
-                }
-
-                $progress->setMessage(\number_format($size / 1000, 2), 'size');
-                $progress->setMessage(\number_format($total / 1000, 2), 'total');
-
-                $progress->setProgress($size);
-            }, $temp);
-        } finally {
-            $progress->clear();
-        }
     }
 }
