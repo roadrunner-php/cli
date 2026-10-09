@@ -18,16 +18,24 @@ use Testo\Test;
 final class MakeConfigCommandTest
 {
     private string $dir;
+    private string $cwd;
 
+    /**
+     * The command also looks for ".rr.yaml" in the working directory, so each test gets its own.
+     */
     #[BeforeTest]
     public function createDirectory(): void
     {
         $this->dir = TempDirectory::create();
+        $this->cwd = (string) \getcwd();
+        \mkdir($this->dir . '/cwd');
+        \chdir($this->dir . '/cwd');
     }
 
     #[AfterTest]
     public function removeDirectory(): void
     {
+        \chdir($this->cwd);
         TempDirectory::remove($this->dir);
     }
 
@@ -72,6 +80,16 @@ final class MakeConfigCommandTest
 
         Assert::same($status, Command::FAILURE);
         Assert::same(\file_get_contents($this->dir . '/.rr.yaml'), 'existing');
+    }
+
+    public function keepsConfigurationOfWorkingDirectory(): void
+    {
+        \file_put_contents($this->dir . '/cwd/.rr.yaml', 'existing');
+
+        $status = $this->run(['--location' => $this->dir]);
+
+        Assert::same($status, Command::FAILURE);
+        Assert::false(\is_file($this->dir . '/.rr.yaml'));
     }
 
     /**

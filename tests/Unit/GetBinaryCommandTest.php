@@ -29,17 +29,26 @@ final class GetBinaryCommandTest
     /** @var list<string> */
     private array $downloads = [];
 
+    private string $cwd;
+
+    /**
+     * The command also looks for ".rr.yaml" in the working directory, so each test gets its own.
+     */
     #[BeforeTest]
     public function createDirectory(): void
     {
         $this->dir = TempDirectory::create();
         $this->target = $this->dir . '/bin';
         \mkdir($this->target);
+        $this->cwd = (string) \getcwd();
+        \mkdir($this->dir . '/cwd');
+        \chdir($this->dir . '/cwd');
     }
 
     #[AfterTest]
     public function removeDirectory(): void
     {
+        \chdir($this->cwd);
         TempDirectory::remove($this->dir);
     }
 
