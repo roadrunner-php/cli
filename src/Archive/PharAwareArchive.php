@@ -26,6 +26,7 @@ abstract class PharAwareArchive extends Archive
      * @param iterable<string, string> $mappings
      * @return \Generator<mixed, \SplFileInfo>
      */
+    #[\Override]
     public function extract(iterable $mappings): \Generator
     {
         $phar = $this->open($this->archive);

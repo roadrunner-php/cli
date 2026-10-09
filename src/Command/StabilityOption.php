@@ -30,6 +30,7 @@ class StabilityOption extends Option
      *
      * @return StabilityType|string
      */
+    #[\Override]
     public function get(InputInterface $input, StyleInterface $io): string
     {
         $stability = parent::get($input, $io);
@@ -42,11 +43,13 @@ class StabilityOption extends Option
         return $stability;
     }
 
+    #[\Override]
     protected function getDescription(): string
     {
         return 'Release minimum stability flag';
     }
 
+    #[\Override]
     protected function default(): string
     {
         return Stability::STABILITY_STABLE;

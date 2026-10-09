@@ -8,11 +8,13 @@ final class Http extends AbstractSection
 {
     private const NAME = 'http';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [
@@ -36,6 +38,7 @@ final class Http extends AbstractSection
         ];
     }
 
+    #[\Override]
     public function getRequired(): array
     {
         return [

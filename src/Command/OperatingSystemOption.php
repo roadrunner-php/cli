@@ -23,6 +23,7 @@ class OperatingSystemOption extends Option
         parent::__construct($command, $name, $short);
     }
 
+    #[\Override]
     public function get(InputInterface $input, StyleInterface $io): string
     {
         $os = parent::get($input, $io);
@@ -35,11 +36,13 @@ class OperatingSystemOption extends Option
         return $os;
     }
 
+    #[\Override]
     protected function getDescription(): string
     {
         return 'Required operating system (one of: ' . $this->choices() . ')';
     }
 
+    #[\Override]
     protected function default(): string
     {
         return OperatingSystem::createFromGlobals();

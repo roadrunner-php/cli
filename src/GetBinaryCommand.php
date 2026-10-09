@@ -56,6 +56,7 @@ class GetBinaryCommand extends Command
         $this->stability = new StabilityOption($this);
     }
 
+    #[\Override]
     public function getDescription(): string
     {
         return 'Install or update RoadRunner binary';
@@ -65,6 +66,7 @@ class GetBinaryCommand extends Command
      *
      * @throws \Throwable
      */
+    #[\Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = $this->io($input, $output);
@@ -84,10 +86,6 @@ class GetBinaryCommand extends Command
         // List of all available releases
         $releases = $this->version->find($input, $io, $repository);
 
-        /**
-         * @var AssetInterface $asset
-         * @var ReleaseInterface $release
-         */
         [$asset, $release] = $this->findAsset($repository, $releases, $input, $io);
 
         // Installation
@@ -129,6 +127,7 @@ class GetBinaryCommand extends Command
         return 0;
     }
 
+    #[\Override]
     protected function configure(): void
     {
         $this->addOption(
@@ -173,6 +172,7 @@ class GetBinaryCommand extends Command
         $file = null;
         while ($extractor->valid()) {
             $file = $extractor->current();
+            \assert($file instanceof \SplFileInfo);
 
             if (! $this->checkExisting($file, $io)) {
                 $extractor->send(false);
@@ -199,7 +199,7 @@ class GetBinaryCommand extends Command
     {
         $to .= '/.rr.yaml';
 
-        if (\is_file($to) || \is_file(\getcwd() . '/.rr.yaml')) {
+        if (\is_file($to) || \is_file((string) \getcwd() . '/.rr.yaml')) {
             return false;
         }
 
@@ -208,9 +208,11 @@ class GetBinaryCommand extends Command
         }
 
         $generator = new Generator();
-        $plugins = $in->getOption('preset') ?
-            Plugins::fromPreset($in->getOption('preset')) :
-            Plugins::fromPlugins($in->getOption('plugin'));
+        /** @var string|null $preset */
+        $preset = $in->getOption('preset');
+        /** @var string[] $names */
+        $names = $in->getOption('plugin');
+        $plugins = $preset !== null && $preset !== '' ? Plugins::fromPreset($preset) : Plugins::fromPlugins($names);
 
         try {
             $config = $generator->generate($plugins);
@@ -218,6 +220,7 @@ class GetBinaryCommand extends Command
             $io->error($e->getMessage());
         }
 
+        /** @psalm-suppress PossiblyUndefinedVariable https://github.com/roadrunner-php/cli/issues/62 */
         \file_put_contents($to, $config);
 
         return true;

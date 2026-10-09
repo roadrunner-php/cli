@@ -1,56 +1,75 @@
-<a href="https://roadrunner.dev" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/roadrunner-server/.github/assets/8040338/e6bde856-4ec6-4a52-bd5b-bfe78736c1ff">
-    <img align="center" src="https://github.com/roadrunner-server/.github/assets/8040338/040fb694-1dd3-4865-9d29-8e0748c2c8b8">
-  </picture>
-</a>
-
 <p align="center">
- <a href="https://packagist.org/packages/spiral/roadrunner"><img src="https://poser.pugx.org/spiral/roadrunner/version"></a>
-	<a href="https://pkg.go.dev/github.com/spiral/roadrunner?tab=doc"><img src="https://godoc.org/github.com/spiral/roadrunner?status.svg"></a>
-	<a href="https://github.com/spiral/roadrunner/actions"><img src="https://github.com/spiral/roadrunner/workflows/CI/badge.svg" alt=""></a>
-	<a href="https://goreportcard.com/report/github.com/spiral/roadrunner"><img src="https://goreportcard.com/badge/github.com/spiral/roadrunner"></a>
-	<a href="https://scrutinizer-ci.com/g/spiral/roadrunner/?branch=master"><img src="https://scrutinizer-ci.com/g/spiral/roadrunner/badges/quality-score.png"></a>
-	<a href="https://discord.gg/spiralphp"><img src="https://img.shields.io/badge/discord-chat-magenta.svg"></a>
-	<a href="https://packagist.org/packages/spiral/roadrunner"><img src="https://img.shields.io/packagist/dd/spiral/roadrunner?style=flat-square"></a>
+    <a href="https://roadrunner.dev"><picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://github.com/roadrunner-server/.github/assets/8040338/e6bde856-4ec6-4a52-bd5b-bfe78736c1ff">
+        <img alt="RoadRunner" src="https://github.com/roadrunner-server/.github/assets/8040338/040fb694-1dd3-4865-9d29-8e0748c2c8b8" style="width: 6in; display: block">
+    </picture></a>
 </p>
 
-RoadRunner is an open-source (MIT licensed) high-performance PHP application server, load balancer, and process manager.
-It supports running as a service with the ability to extend its functionality on a per-project basis.
+<p align="center">Command line tool to install RoadRunner binaries and generate configs</p>
 
-RoadRunner includes PSR-7/PSR-17 compatible HTTP and HTTP/2 server and can be used to replace classic Nginx+FPM setup with much greater performance and flexibility.
+<div align="center">
 
-<p align="center">
-	<a href="https://roadrunner.dev/"><b>Official Website</b></a> | 
-	<a href="https://docs.roadrunner.dev"><b>Documentation</b></a>
-</p>
+[![Documentation](https://img.shields.io/badge/Documentation-blue?style=for-the-badge&logo=gitbook&logoColor=white)](https://docs.roadrunner.dev)
+[![Sponsor](https://img.shields.io/static/v1?style=for-the-badge&label=&message=Sponsor&logo=githubsponsors&logoColor=white&color=%23EA4AAA)](https://github.com/sponsors/roadrunner-server)
 
-## RoadRunner CLI
+[![Psalm Level](https://shepherd.dev/github/roadrunner-php/cli/level.svg)](https://shepherd.dev/github/roadrunner-php/cli)
+[![Type Coverage](https://shepherd.dev/github/roadrunner-php/cli/coverage.svg)](https://shepherd.dev/github/roadrunner-php/cli)
+[![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Froadrunner-php%2Fcli%2F2.x)](https://dashboard.stryker-mutator.io/reports/github.com/roadrunner-php/cli/2.x)
 
-This repository contains commands to help you work with the RoadRunner, such as:
+</div>
 
-- `get-binary` (or `get`) - allows to install the latest version of the RoadRunner compatible with 
+<br />
+
+This package provides the `rr` console command for PHP projects that run on [RoadRunner](https://roadrunner.dev): it downloads the RoadRunner server binary and `protoc-gen-php-grpc` plugin built for your environment and generates a starter `.rr.yaml` configuration.
+
+## Get Started
+
+### Installation
+
+```bash
+composer require spiral/roadrunner-cli
+```
+
+[![PHP](https://img.shields.io/packagist/php-v/spiral/roadrunner-cli.svg?style=flat-square&logo=php)](https://packagist.org/packages/spiral/roadrunner-cli)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/spiral/roadrunner-cli.svg?style=flat-square&logo=packagist)](https://packagist.org/packages/spiral/roadrunner-cli)
+[![License](https://img.shields.io/packagist/l/spiral/roadrunner-cli.svg?style=flat-square)](LICENSE)
+[![Total Downloads](https://img.shields.io/packagist/dt/spiral/roadrunner-cli.svg?style=flat-square)](https://packagist.org/packages/spiral/roadrunner-cli/stats)
+
+### Getting the RoadRunner binary
+
+Download the latest RoadRunner binary for your operating system and architecture into the project root, along with an example `.rr.yaml`:
+
+```bash
+vendor/bin/rr get-binary
+```
+
+Then start the server:
+
+```bash
+./rr serve
+```
+
+See the [RoadRunner documentation](https://docs.roadrunner.dev) for the configuration reference.
+
+## Commands
+
+- `get-binary` (or `get`) - allows to install the latest version of the RoadRunner compatible with
   your environment (operating system, processor architecture, runtime, etc...).
-  Also, this command creates an example `.rr.yaml` configuration file. If don't use the command without additional options 
-  `plugin` and `preset`, an example with a complete configuration file will be created. 
-  Using the `plugin` option (shortcut `p`) can create an example configuration file with only plugins needed. 
-  For example, with http plugin only: `get-binary -p http`, http and jobs: `get-binary -p http -p jobs`. 
+  Also, this command creates an example `.rr.yaml` configuration file. If the command is used without the
+  `plugin` and `preset` options, a configuration with the default plugins (`rpc`, `server`, `http`, `jobs`, `kv`, `metrics`) is created.
+  Using the `plugin` option (shortcut `p`) can create an example configuration file with only plugins needed.
+  For example, with http plugin only: `get-binary -p http`, http and jobs: `get-binary -p http -p jobs`.
   Available plugins: `amqp`, `beanstalk`, `boltdb`, `broadcast`, `endure`, `fileserver`, `grpc`, `http`, `jobs`, `kv`,
-  `logs`, `metrics`, `nats`, `redis`, `reload`, `rpc`, `server`, `service`, `sqs`, `status`, `tcp`, `temporal`, `websockets`.
-  Using the `preset` option can create an example configuration file with popular plugins for different typical tasks. 
+  `logs`, `metrics`, `nats`, `otel`, `redis`, `reload`, `rpc`, `server`, `service`, `sqs`, `status`, `tcp`, `temporal`, `websockets`.
+  Using the `preset` option can create an example configuration file with popular plugins for different typical tasks.
   For example, with web preset: `get-binary --preset web`.
   Available presets: `web` (contains plugins `http`, `jobs`).
+  Use `--no-config` to skip the configuration file.
+- `make-config` - creates the `.rr.yaml` configuration file without downloading the binary. Accepts the same `plugin` and `preset` options.
 - `download-protoc-binary` - allows to install the latest version of the `protoc-gen-php-grpc` file compatible with
   your environment (operating system, processor architecture, runtime, etc...).
 - `versions` - displays a list of available RoadRunner binary versions.
 
-Testing:
---------
+### Common options
 
-This codebase is automatically tested via host repository - [roadrunner-server/roadrunner](https://github.com/roadrunner-server/roadrunner).
-
-License:
---------
-
-The MIT License (MIT). Please see [`LICENSE`](./LICENSE) for more information. 
-Maintained by [Spiral Scout](https://spiralscout.com).
+The binary commands accept `--filter` (`-f`, version constraint), `--stability` (`-s`), `--os` (`-o`), `--arch` (`-a`) and `--location` (`-l`, target directory) options. Releases are fetched from the GitHub API; set the `GITHUB_TOKEN` environment variable to avoid its rate limits.

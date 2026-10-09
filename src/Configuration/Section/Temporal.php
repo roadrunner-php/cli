@@ -8,11 +8,13 @@ final class Temporal extends AbstractSection
 {
     private const NAME = 'temporal';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [

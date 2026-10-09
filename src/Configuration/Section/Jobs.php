@@ -8,11 +8,13 @@ final class Jobs extends AbstractSection
 {
     private const NAME = 'jobs';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [
@@ -26,6 +28,7 @@ final class Jobs extends AbstractSection
         ];
     }
 
+    #[\Override]
     public function getRequired(): array
     {
         return [

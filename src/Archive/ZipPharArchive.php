@@ -13,6 +13,7 @@ namespace Spiral\RoadRunner\Console\Archive;
 
 final class ZipPharArchive extends PharAwareArchive
 {
+    #[\Override]
     protected function open(\SplFileInfo $file): \PharData
     {
         $format = \Phar::ZIP | \Phar::GZ;

@@ -54,6 +54,7 @@ final class GitHubRepository implements RepositoryInterface
      *
      * @throws ExceptionInterface
      */
+    #[\Override]
     public function getReleases(): ReleasesCollection
     {
         return ReleasesCollection::from(function () {
@@ -70,6 +71,7 @@ final class GitHubRepository implements RepositoryInterface
         });
     }
 
+    #[\Override]
     public function getName(): string
     {
         return $this->name;

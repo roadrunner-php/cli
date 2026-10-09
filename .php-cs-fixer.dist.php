@@ -7,6 +7,8 @@ require_once 'vendor/autoload.php';
 return \Spiral\CodeStyle\Builder::create()
     ->include(__DIR__ . '/bin/rr')
     ->include(__DIR__ . '/src')
+    ->include(__DIR__ . '/tests')
     ->include(__FILE__)
-    ->allowRisky(true)
+    ->cache('./runtime/php-cs-fixer.cache')
+    ->allowRisky(false)
     ->build();

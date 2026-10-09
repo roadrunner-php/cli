@@ -37,7 +37,7 @@ abstract class Command extends BaseCommand
 
         $client = HttpClient::create([
             'headers' => \array_filter([
-                'authorization' => $token ? 'token ' . $token : null,
+                'authorization' => $token !== null && $token !== '' ? 'token ' . $token : null,
             ]),
         ]);
 

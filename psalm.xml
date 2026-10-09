@@ -3,7 +3,6 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="https://getpsalm.org/schema/config"
     xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
-    errorBaseline="psalm-baseline.xml"
     errorLevel="1"
     hoistConstants="true"
     resolveFromConfigFile="true"
@@ -16,6 +15,8 @@
 >
     <issueHandlers>
         <MissingClassConstType errorLevel="suppress" />
+        <!-- Making public classes final would break BC for users who extend them -->
+        <ClassMustBeFinal errorLevel="suppress" />
     </issueHandlers>
     <projectFiles>
         <directory name="src" />

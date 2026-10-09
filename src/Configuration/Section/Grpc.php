@@ -8,11 +8,13 @@ final class Grpc extends AbstractSection
 {
     private const NAME = 'grpc';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [
@@ -46,6 +48,7 @@ final class Grpc extends AbstractSection
         ];
     }
 
+    #[\Override]
     public function getRequired(): array
     {
         return [
