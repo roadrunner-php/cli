@@ -22,6 +22,7 @@ class InstallationLocationOption extends Option
         parent::__construct($command, $name, $short);
     }
 
+    #[\Override]
     public function get(InputInterface $input, StyleInterface $io): string
     {
         $location = parent::get($input, $io);
@@ -38,11 +39,13 @@ class InstallationLocationOption extends Option
         return $location;
     }
 
+    #[\Override]
     protected function getDescription(): string
     {
         return 'Installation directory';
     }
 
+    #[\Override]
     protected function default(): string
     {
         return \getcwd() ?: '.';

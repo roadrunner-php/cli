@@ -25,6 +25,7 @@ class MakeConfigCommand extends Command
      *
      * @throws \Throwable
      */
+    #[\Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = $this->io($input, $output);
@@ -32,14 +33,16 @@ class MakeConfigCommand extends Command
 
         $target = $this->location->get($input, $io) . '/.rr.yaml';
 
-        if (\is_file($target) || \is_file(\getcwd() . '/.rr.yaml')) {
+        if (\is_file($target) || \is_file((string) \getcwd() . '/.rr.yaml')) {
             return self::FAILURE;
         }
 
         $generator = new Generator();
-        $plugins = $input->getOption('preset') ?
-            Plugins::fromPreset($input->getOption('preset')) :
-            Plugins::fromPlugins($input->getOption('plugin'));
+        /** @var string|null $preset */
+        $preset = $input->getOption('preset');
+        /** @var string[] $names */
+        $names = $input->getOption('plugin');
+        $plugins = $preset !== null && $preset !== '' ? Plugins::fromPreset($preset) : Plugins::fromPlugins($names);
 
         try {
             $config = $generator->generate($plugins);
@@ -52,6 +55,7 @@ class MakeConfigCommand extends Command
         return self::SUCCESS;
     }
 
+    #[\Override]
     protected function configure(): void
     {
         $this->addOption(

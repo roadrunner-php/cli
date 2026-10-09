@@ -61,6 +61,7 @@ final class GitHubAsset extends Asset
      *
      * @throws ExceptionInterface
      */
+    #[\Override]
     public function download(?\Closure $progress = null): \Traversable
     {
         $response = $this->client->request('GET', $this->getUri(), [

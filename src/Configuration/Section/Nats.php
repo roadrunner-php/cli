@@ -8,11 +8,13 @@ final class Nats extends AbstractSection
 {
     private const NAME = 'nats';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [

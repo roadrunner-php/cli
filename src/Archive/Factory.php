@@ -31,6 +31,7 @@ class Factory implements FactoryInterface
         $this->bootDefaultMatchers();
     }
 
+    #[\Override]
     public function extend(\Closure $matcher): self
     {
         \array_unshift($this->matchers, $matcher);
@@ -38,6 +39,7 @@ class Factory implements FactoryInterface
         return $this;
     }
 
+    #[\Override]
     public function create(\SplFileInfo $file): ArchiveInterface
     {
         $errors = [];
@@ -60,6 +62,7 @@ class Factory implements FactoryInterface
         throw new \InvalidArgumentException($error);
     }
 
+    #[\Override]
     public function fromAsset(AssetInterface $asset, ?\Closure $progress = null, ?string $temp = null): ArchiveInterface
     {
         $temp = $this->getTempDirectory($temp) . '/' . $asset->getName();
@@ -110,7 +113,7 @@ class Factory implements FactoryInterface
 
     private function getTempDirectory(?string $temp): string
     {
-        if ($temp) {
+        if ($temp !== null && $temp !== '') {
             if (! \is_dir($temp) || ! \is_writable($temp)) {
                 throw new \LogicException(\sprintf('Directory "%s" is not writeable', $temp));
             }

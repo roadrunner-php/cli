@@ -23,6 +23,7 @@ class ArchitectureOption extends Option
         parent::__construct($command, $name, $short);
     }
 
+    #[\Override]
     public function get(InputInterface $input, StyleInterface $io): string
     {
         $architecture = parent::get($input, $io);
@@ -35,11 +36,13 @@ class ArchitectureOption extends Option
         return $architecture;
     }
 
+    #[\Override]
     protected function getDescription(): string
     {
         return 'Required processor architecture (one of: ' . $this->choices() . ')';
     }
 
+    #[\Override]
     protected function default(): string
     {
         return Architecture::createFromGlobals();

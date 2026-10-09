@@ -1,10 +1,13 @@
 on:
   push:
     branches:
-      - '*.*'
+      - '2.x'
   pull_request: null
 
 name: static analysis
+
+permissions:
+  contents: read
 
 jobs:
   psalm:

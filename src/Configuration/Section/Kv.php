@@ -8,11 +8,13 @@ final class Kv extends AbstractSection
 {
     private const NAME = 'kv';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [

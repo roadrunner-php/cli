@@ -16,10 +16,16 @@ use Composer\Semver\VersionParser;
 use JetBrains\PhpStorm\ExpectedValues;
 use Spiral\RoadRunner\Console\Environment\Stability;
 
+/**
+ * @psalm-import-type StabilityType from Stability
+ */
 abstract class Release implements ReleaseInterface
 {
     private string $name;
 
+    /**
+     * @var StabilityType
+     */
     #[ExpectedValues(valuesFromClass: Stability::class)]
     private string $stability;
 
@@ -38,37 +44,46 @@ abstract class Release implements ReleaseInterface
         $this->stability = $this->parseStability($version);
     }
 
+    #[\Override]
     public function getName(): string
     {
         return $this->name;
     }
 
+    #[\Override]
     public function getVersion(): string
     {
         return $this->version;
     }
 
+    #[\Override]
     public function getRepositoryName(): string
     {
         return $this->repository;
     }
 
+    #[\Override]
     #[ExpectedValues(valuesFromClass: Stability::class)]
     public function getStability(): string
     {
         return $this->stability;
     }
 
+    #[\Override]
     public function getAssets(): AssetsCollection
     {
         return $this->assets;
     }
 
+    #[\Override]
     public function satisfies(string $constraint): bool
     {
         return Semver::satisfies($this->getName(), $constraint);
     }
 
+    /**
+     * @return StabilityType
+     */
     private function parseStability(string $version): string
     {
         return VersionParser::parseStability($version);

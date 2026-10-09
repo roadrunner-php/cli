@@ -8,11 +8,13 @@ final class Otel extends AbstractSection
 {
     private const NAME = 'otel';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [

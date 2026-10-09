@@ -44,11 +44,13 @@ final class DownloadProtocBinaryCommand extends Command
         $this->stability = new StabilityOption($this);
     }
 
+    #[\Override]
     public function getDescription(): string
     {
         return 'Install or update protoc-gen-php-grpc binary';
     }
 
+    #[\Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = $this->io($input, $output);
@@ -113,6 +115,7 @@ final class DownloadProtocBinaryCommand extends Command
         $file = null;
         while ($extractor->valid()) {
             $file = $extractor->current();
+            \assert($file instanceof \SplFileInfo);
 
             if (!$this->checkExisting($file, $io)) {
                 $extractor->send(false);
