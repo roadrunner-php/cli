@@ -8,11 +8,13 @@ final class Logs extends AbstractSection
 {
     private const NAME = 'logs';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [

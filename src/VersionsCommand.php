@@ -38,6 +38,7 @@ class VersionsCommand extends Command
         $this->stability = new StabilityOption($this);
 
         $this->version = new class($this) extends VersionFilterOption {
+            #[\Override]
             protected function default(): string
             {
                 return '*';
@@ -45,11 +46,13 @@ class VersionsCommand extends Command
         };
     }
 
+    #[\Override]
     public function getDescription(): string
     {
         return 'Returns a list of all available RoadRunner versions';
     }
 
+    #[\Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = $this->io($input, $output);

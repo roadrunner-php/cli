@@ -18,6 +18,9 @@ namespace Spiral\RoadRunner\Console\Repository;
  * @template T
  *
  * @template-implements \IteratorAggregate<array-key, T>
+ *
+ * The constructor is final and every subclass is final with a fixed item type, so `new static` is safe.
+ * @psalm-suppress UnsafeGenericInstantiation
  */
 abstract class Collection implements \IteratorAggregate, \Countable
 {
@@ -122,11 +125,13 @@ abstract class Collection implements \IteratorAggregate, \Countable
         return $this->first($filter) ?? $otherwise();
     }
 
+    #[\Override]
     public function getIterator(): \Traversable
     {
         return new \ArrayIterator($this->items);
     }
 
+    #[\Override]
     public function count(): int
     {
         return \count($this->items);

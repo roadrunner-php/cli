@@ -8,11 +8,13 @@ final class Broadcast extends AbstractSection
 {
     private const NAME = 'broadcast';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [

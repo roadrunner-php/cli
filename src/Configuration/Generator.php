@@ -37,6 +37,9 @@ class Generator
         return $content;
     }
 
+    /**
+     * @param array<class-string<SectionInterface>> $plugins
+     */
     protected function collectSections(array $plugins): void
     {
         $sections = \array_merge(self::REQUIRED_SECTIONS, $plugins);
@@ -46,9 +49,6 @@ class Generator
         }
     }
 
-    /**
-     * @psalm-return non-empty-array<SectionInterface>
-     */
     protected function fromSection(SectionInterface $section): void
     {
         if (!isset($this->sections[\get_class($section)])) {

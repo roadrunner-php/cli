@@ -94,7 +94,7 @@ final class ReleasesCollection extends Collection
     }
 
     /**
-     * @param StabilityType $stability
+     * @param StabilityType|string $stability Unknown stabilities weigh as "dev".
      * @return $this
      */
     public function minimumStability(string $stability): self

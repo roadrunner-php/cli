@@ -22,11 +22,13 @@ abstract class Asset implements AssetInterface
         $this->uri = $uri;
     }
 
+    #[\Override]
     public function getName(): string
     {
         return $this->name;
     }
 
+    #[\Override]
     public function getUri(): string
     {
         return $this->uri;

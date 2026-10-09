@@ -21,7 +21,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  *
  * @psalm-type GitHubReleaseApiResponse = array {
  *      name: string,
- *      assets: array<array-key, GitHubAssetApiResponse>
+ *      tag_name: string,
+ *      assets?: array<array-key, GitHubAssetApiResponse>
  * }
  */
 final class GitHubRelease extends Release
@@ -67,6 +68,7 @@ final class GitHubRelease extends Release
         return new self($client, $name, $version, $repository->getName(), AssetsCollection::from($instantiator));
     }
 
+    #[\Override]
     public function getConfig(): string
     {
         $config = \vsprintf('https://raw.githubusercontent.com/%s/%s/.rr.yaml', [
@@ -85,7 +87,7 @@ final class GitHubRelease extends Release
      * Note: The return value is "pretty", but that does not mean that the
      * tag physically exists.
      *
-     * @param array { tag_name: string, name: string } $release
+     * @param GitHubReleaseApiResponse $release
      */
     private static function getTagName(array $release): string
     {

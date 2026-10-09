@@ -26,11 +26,13 @@ class RepositoriesCollection implements RepositoryInterface
         $this->repositories = $repositories;
     }
 
+    #[\Override]
     public function getName(): string
     {
         return 'unknown/unknown';
     }
 
+    #[\Override]
     public function getReleases(): ReleasesCollection
     {
         return ReleasesCollection::from(function () {

@@ -39,11 +39,13 @@ final class DownloadProtocBinaryCommand extends Command
         $this->stability = new StabilityOption($this);
     }
 
+    #[\Override]
     public function getDescription(): string
     {
         return 'Install or update protoc-gen-php-grpc binary';
     }
 
+    #[\Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = $this->io($input, $output);

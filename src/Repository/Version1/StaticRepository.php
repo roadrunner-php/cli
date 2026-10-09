@@ -1224,11 +1224,13 @@ final class StaticRepository implements RepositoryInterface
         }
     }
 
+    #[\Override]
     public function getName(): string
     {
         return 'spiral/roadrunner';
     }
 
+    #[\Override]
     public function getReleases(): ReleasesCollection
     {
         return new ReleasesCollection($this->releases);

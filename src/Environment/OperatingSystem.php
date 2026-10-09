@@ -50,7 +50,7 @@ final class OperatingSystem
     #[ExpectedValues(valuesFromClass: OperatingSystem::class)]
     public static function createFromGlobals(?array $variables = null): string
     {
-        return (new Factory())->createFromGlobals($variables);
+        return (new Factory())->createFromGlobals();
     }
 
     public static function isValid(string $value): bool

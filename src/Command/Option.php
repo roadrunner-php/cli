@@ -30,16 +30,16 @@ abstract class Option implements OptionInterface
         $this->register($command, $name, $short ?? $name);
     }
 
+    #[\Override]
     public function getName(): string
     {
         return $this->name;
     }
 
+    #[\Override]
     public function get(InputInterface $input, StyleInterface $io): string
     {
-        $result = $input->getOption($this->name) ?: $this->default();
-
-        return \is_string($result) ? $result : '';
+        return self::toString($input->getOption($this->name) ?: $this->default());
     }
 
     /**
@@ -53,6 +53,11 @@ abstract class Option implements OptionInterface
     abstract protected function getDescription(): string;
 
     abstract protected function default(): ?string;
+
+    private static function toString(mixed $value): string
+    {
+        return \is_string($value) ? $value : '';
+    }
 
     private function register(Command $command, string $name, string $short): void
     {

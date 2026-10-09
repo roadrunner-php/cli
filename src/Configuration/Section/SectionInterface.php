@@ -10,5 +10,8 @@ interface SectionInterface
 
     public function render(): array;
 
+    /**
+     * @return list<class-string<SectionInterface>> Sections this one depends on.
+     */
     public function getRequired(): array;
 }

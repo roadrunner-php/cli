@@ -8,11 +8,13 @@ final class Redis extends AbstractSection
 {
     private const NAME = 'redis';
 
+    #[\Override]
     public static function getShortName(): string
     {
         return self::NAME;
     }
 
+    #[\Override]
     public function render(): array
     {
         return [

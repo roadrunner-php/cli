@@ -41,9 +41,6 @@ interface ReleaseInterface
     #[ExpectedValues(valuesFromClass: Stability::class)]
     public function getStability(): string;
 
-    /**
-     * @return AssetsCollection|iterable<AssetInterface>
-     */
     public function getAssets(): AssetsCollection;
 
     public function satisfies(string $constraint): bool;
