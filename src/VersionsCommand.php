@@ -17,7 +17,7 @@ use Spiral\RoadRunner\Console\Command\StabilityOption;
 use Spiral\RoadRunner\Console\Command\VersionFilterOption;
 use Spiral\RoadRunner\Console\Repository\ReleaseInterface;
 use Spiral\RoadRunner\Console\Environment\Stability;
-use Spiral\RoadRunner\Version;
+use Spiral\RoadRunner\Console\Environment\RoadRunnerVersion;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\StyleInterface;
@@ -89,7 +89,7 @@ class VersionsCommand extends Command
         $template = '<fg=red> ✖ </> (reason: <comment>%s</comment>)';
 
         // Validate version
-        if (! $release->satisfies(Version::constraint())) {
+        if (! $release->satisfies(RoadRunnerVersion::constraint())) {
             return \sprintf($template, 'incompatible version');
         }
 

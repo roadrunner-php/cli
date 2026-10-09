@@ -127,11 +127,16 @@ final class ReleasesCollection extends Collection
         );
     }
 
+    /**
+     * The release name is normalized by composer/semver ("3.0.0-RC1", "3.0.0-beta2"),
+     * so version_compare() orders pre-releases below the stable release.
+     *
+     * RoadRunner went 1.x → 2.x → calendar 2023.x–2025.x → 3.x, so a plain version_compare()
+     * would rank 2025.1.15 above 3.0.0. Calendar releases are rewritten as "2.<year>.…" to sort
+     * them after every 2.x and before every 3.x release.
+     */
     private function comparisonVersionString(ReleaseInterface $release): string
     {
-        $stability = $release->getStability();
-        $weight = Stability::toInt($stability);
-
-        return \str_replace('-' . $stability, '.' . $weight . '.', $release->getVersion());
+        return (string) \preg_replace('/^(20\d{2}\.)/', '2.$1', $release->getName());
     }
 }

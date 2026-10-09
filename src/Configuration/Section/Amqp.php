@@ -17,7 +17,10 @@ final class Amqp extends AbstractSection
     {
         return [
             self::NAME => [
-                'addr' => 'amqp://guest:guest@127.0.0.1:5672/',
+                // Jobs pipelines refer to this connection name via `config.connection`
+                'default' => [
+                    'addr' => 'amqp://guest:guest@127.0.0.1:5672/',
+                ],
             ],
         ];
     }

@@ -15,7 +15,7 @@ use Symfony\Component\Console\Command\Command;
 use Spiral\RoadRunner\Console\Repository\ReleaseInterface;
 use Spiral\RoadRunner\Console\Repository\ReleasesCollection;
 use Spiral\RoadRunner\Console\Repository\RepositoryInterface;
-use Spiral\RoadRunner\Version as RoadRunnerVersion;
+use Spiral\RoadRunner\Console\Environment\RoadRunnerVersion;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Style\StyleInterface;
 
