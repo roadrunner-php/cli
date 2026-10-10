@@ -68,7 +68,7 @@ require RR_COMPOSER_INSTALL;
 
 $app = new \Symfony\Component\Console\Application('RoadRunner CLI', Version::current());
 
-if (method_exists($app, 'addCommand')) {
+if (\method_exists($app, 'addCommand')) {
     $app->addCommand(new GetBinaryCommand());
     $app->addCommand(new VersionsCommand());
     $app->addCommand(new DownloadProtocBinaryCommand());

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Spiral\RoadRunner\Console\Tests\Unit\Command;
 
 use Spiral\RoadRunner\Console\Command\VersionFilterOption;
+use Spiral\RoadRunner\Console\Environment\RoadRunnerVersion;
 use Spiral\RoadRunner\Console\Tests\Unit\Stub\InMemoryRepository;
 use Spiral\RoadRunner\Console\Tests\Unit\Stub\OptionHost;
 use Spiral\RoadRunner\Console\Tests\Unit\Stub\Releases;
-use Spiral\RoadRunner\Version;
 use Testo\Assert;
 use Testo\Expect;
 use Testo\Test;
@@ -22,7 +22,7 @@ final class VersionFilterOptionTest
         $option = new VersionFilterOption($host->command);
         $input = $host->input();
 
-        Assert::same($option->get($input, $host->io($input)), Version::constraint());
+        Assert::same($option->get($input, $host->io($input)), RoadRunnerVersion::constraint());
     }
 
     public function findReturnsMatchingReleasesNewestFirst(): void
