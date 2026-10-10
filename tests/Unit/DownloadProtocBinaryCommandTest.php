@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Tests\Unit;
 
-use Spiral\RoadRunner\Console\DownloadProtocBinaryCommand;
 use Spiral\RoadRunner\Console\Downloader\DLoadDownloader;
+use Spiral\RoadRunner\Console\DownloadProtocBinaryCommand;
 use Spiral\RoadRunner\Console\Tests\Unit\Stub\DLoadGetSpy;
 use Spiral\RoadRunner\Console\Tests\Unit\Stub\TempDirectory;
 use Symfony\Component\Console\Tester\CommandTester;
