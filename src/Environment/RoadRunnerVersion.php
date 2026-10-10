@@ -27,7 +27,7 @@ final class RoadRunnerVersion
      * spiral/roadrunner metapackage, e.g. "3.*" or "2025.*".
      *
      * Not delegated to {@see \Spiral\RoadRunner\Version::constraint()}: without the metapackage
-     * it falls back to the spiral/roadrunner-worker version, whose major is unrelated to the binary's.
+     * it falls back to the roadrunner/worker version, whose major is unrelated to the binary's.
      */
     public static function constraint(): string
     {

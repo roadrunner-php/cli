@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Tests\Unit;
 
+use Spiral\RoadRunner\Console\Environment\RoadRunnerVersion;
 use Spiral\RoadRunner\Console\Repository\ReleaseInterface;
 use Spiral\RoadRunner\Console\Repository\RepositoryInterface;
 use Spiral\RoadRunner\Console\Tests\Unit\Stub\InMemoryRepository;
 use Spiral\RoadRunner\Console\Tests\Unit\Stub\Releases;
 use Spiral\RoadRunner\Console\VersionsCommand;
-use Spiral\RoadRunner\Version;
 use Symfony\Component\Console\Tester\CommandTester;
 use Testo\Assert;
-use Testo\Core\Exception\SkipTest;
 use Testo\Test;
 
 #[Test]
@@ -59,10 +58,6 @@ final class VersionsCommandTest
 
     public function marksIncompatibleVersions(): void
     {
-        if (Version::constraint() === '*') {
-            throw new SkipTest('Every version is compatible when RoadRunner is installed from a branch');
-        }
-
         $display = self::run(
             ['--os' => 'linux', '--arch' => 'amd64'],
             Releases::release('v1.9.0', ['roadrunner-1.9.0-linux-amd64.tar.gz']),
@@ -91,9 +86,7 @@ final class VersionsCommandTest
      */
     private static function compatibleMajor(): string
     {
-        $constraint = Version::constraint();
-
-        return $constraint === '*' ? '2024' : \substr($constraint, 0, -2);
+        return \substr(RoadRunnerVersion::constraint(), 0, -2);
     }
 
     /**

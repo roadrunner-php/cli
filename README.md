@@ -27,13 +27,13 @@ This package provides the `rr` console command for PHP projects that run on [Roa
 ### Installation
 
 ```bash
-composer require spiral/roadrunner-cli
+composer require roadrunner/cli
 ```
 
-[![PHP](https://img.shields.io/packagist/php-v/spiral/roadrunner-cli.svg?style=flat-square&logo=php)](https://packagist.org/packages/spiral/roadrunner-cli)
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/spiral/roadrunner-cli.svg?style=flat-square&logo=packagist)](https://packagist.org/packages/spiral/roadrunner-cli)
-[![License](https://img.shields.io/packagist/l/spiral/roadrunner-cli.svg?style=flat-square)](LICENSE)
-[![Total Downloads](https://img.shields.io/packagist/dt/spiral/roadrunner-cli.svg?style=flat-square)](https://packagist.org/packages/spiral/roadrunner-cli/stats)
+[![PHP](https://img.shields.io/packagist/php-v/roadrunner/cli.svg?style=flat-square&logo=php)](https://packagist.org/packages/roadrunner/cli)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/roadrunner/cli.svg?style=flat-square&logo=packagist)](https://packagist.org/packages/roadrunner/cli)
+[![License](https://img.shields.io/packagist/l/roadrunner/cli.svg?style=flat-square)](LICENSE)
+[![Total Downloads](https://img.shields.io/packagist/dt/roadrunner/cli.svg?style=flat-square)](https://packagist.org/packages/roadrunner/cli/stats)
 
 ### Getting the RoadRunner binary
 

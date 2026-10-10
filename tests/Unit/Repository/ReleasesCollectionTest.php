@@ -82,6 +82,16 @@ final class ReleasesCollectionTest
         );
     }
 
+    public function sortByVersionPutsCalendarReleasesBetweenV2AndV3(): void
+    {
+        $releases = Releases::collection('v2025.1.15', 'v2.12.3', 'v3.0.0', 'v2023.3.0', 'v3.0.0-rc.1');
+
+        Assert::same(
+            Releases::versions($releases->sortByVersion()),
+            ['v3.0.0', 'v3.0.0-rc.1', 'v2025.1.15', 'v2023.3.0', 'v2.12.3'],
+        );
+    }
+
     public function stableKeepsOnlyStableReleases(): void
     {
         $releases = Releases::collection('v2024.1.0-rc.1', 'v2024.1.0', 'v2024.1.0-beta.1');
