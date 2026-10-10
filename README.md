@@ -14,13 +14,16 @@
 
 [![Psalm Level](https://shepherd.dev/github/roadrunner-php/cli/level.svg)](https://shepherd.dev/github/roadrunner-php/cli)
 [![Type Coverage](https://shepherd.dev/github/roadrunner-php/cli/coverage.svg)](https://shepherd.dev/github/roadrunner-php/cli)
-[![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Froadrunner-php%2Fcli%2F2.x)](https://dashboard.stryker-mutator.io/reports/github.com/roadrunner-php/cli/2.x)
+[![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Froadrunner-php%2Fcli%2F3.x)](https://dashboard.stryker-mutator.io/reports/github.com/roadrunner-php/cli/3.x)
 
 </div>
 
 <br />
 
 This package provides the `rr` console command for PHP projects that run on [RoadRunner](https://roadrunner.dev): it downloads the RoadRunner server binary and `protoc-gen-php-grpc` plugin built for your environment and generates a starter `.rr.yaml` configuration.
+
+> [!NOTE]
+> Version 3.x of `roadrunner/cli` targets RoadRunner v3: `rr get` downloads RoadRunner 3 by default. For RoadRunner 2025.x, use [`spiral/roadrunner-cli`](https://packagist.org/packages/spiral/roadrunner-cli) 2.x.
 
 ## Get Started
 

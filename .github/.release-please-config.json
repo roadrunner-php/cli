@@ -9,7 +9,7 @@
     },
     "bootstrap-sha": "54909d3fff22d34d1a6e894785f3df9dca0e2e8c",
     "include-component-in-tag": false,
-    "include-v-in-tag": true,
+    "include-v-in-tag": false,
     "changelog-sections": [
         {
             "type": "feat",
