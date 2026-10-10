@@ -75,10 +75,10 @@ final class DLoadDownloaderTest
         Assert::same(\simplexml_load_file($config)?->count(), 0);
     }
 
-    #[DataSet(['https://ghe.example.com/api/v3/', 'ghe.example.com'])]
-    #[DataSet(['http://127.0.0.1:8080/github', '127.0.0.1:8080'], 'port is kept')]
-    #[DataSet(['ghe.example.com', 'ghe.example.com'], 'bare host')]
-    public function pointsRegistryAtGitHubApiHost(string $url, string $host): void
+    #[DataSet(['https://ghe.example.com/api/v3', 'https://ghe.example.com'])]
+    #[DataSet(['https://GHE.example.com/api/v3/', 'https://ghe.example.com'], 'trailing slash')]
+    #[DataSet(['http://127.0.0.1:8080/api/v3', 'http://127.0.0.1:8080'], 'scheme and port are kept')]
+    public function pointsRegistryAtEnterpriseServer(string $url, string $server): void
     {
         $get = new DLoadGetSpy();
 
@@ -87,26 +87,46 @@ final class DLoadDownloaderTest
 
         $config = \simplexml_load_string($get->configs[0]);
         Assert::notSame($config, false);
-        $hosts = [];
+        $servers = [];
         foreach ($config->registry->software as $software) {
-            $hosts[(string) $software['alias']] = (string) $software->repository['host'];
+            $servers[(string) $software['alias']] = (string) $software->repository['server'];
         }
-        Assert::same($hosts, ['rr' => $host, 'protoc-gen-php-grpc' => $host]);
+        Assert::same($servers, ['rr' => $server, 'protoc-gen-php-grpc' => $server]);
         Assert::false(\is_file((string) $get->calls[0]->getOption('config')));
     }
 
-    public function rejectsGitHubApiUrlWithoutHost(): never
+    #[DataSet(['https://api.github.com'])]
+    #[DataSet(['https://api.github.com/'], 'trailing slash')]
+    #[DataSet([''], 'empty')]
+    public function keepsBundledConfigForPublicGitHub(string $url): void
+    {
+        $get = new DLoadGetSpy();
+
+        (new DLoadDownloader($get, $url))
+            ->download('rr', '*', 'stable', 'linux', 'amd64', $this->dir, false, new BufferedOutput());
+
+        Assert::same(\simplexml_load_string($get->configs[0])?->count(), 0);
+    }
+
+    #[DataSet(['http://'], 'no host')]
+    #[DataSet(['ghe.example.com/api/v3'], 'no scheme')]
+    #[DataSet(['ftp://ghe.example.com/api/v3'], 'unsupported scheme')]
+    #[DataSet(['https://ghe.example.com'], 'no API path')]
+    #[DataSet(['http://127.0.0.1:8080/github'], 'other API path')]
+    #[DataSet(['https://api.github.com/api/v3'], 'public GitHub with enterprise path')]
+    #[DataSet(['https://user:secret@ghe.example.com/api/v3'], 'credentials')]
+    public function rejectsGitHubApiUrlDLoadCanNotUse(string $url): never
     {
         Expect::exception(\InvalidArgumentException::class)->withMessageContaining('RR_GITHUB_API_URL');
 
-        (new DLoadDownloader(new DLoadGetSpy(), 'http://'))
+        (new DLoadDownloader(new DLoadGetSpy(), $url))
             ->download('rr', '*', 'stable', 'linux', 'amd64', $this->dir, false, new BufferedOutput());
     }
 
     public function readsGitHubApiUrlFromEnvironment(): void
     {
         $get = new DLoadGetSpy();
-        $_SERVER['RR_GITHUB_API_URL'] = 'http://127.0.0.1:8080/github';
+        $_SERVER['RR_GITHUB_API_URL'] = 'http://127.0.0.1:8080/api/v3';
 
         try {
             $this->download($get);
@@ -114,7 +134,7 @@ final class DLoadDownloaderTest
             unset($_SERVER['RR_GITHUB_API_URL']);
         }
 
-        Assert::string($get->configs[0])->contains('host="127.0.0.1:8080"');
+        Assert::string($get->configs[0])->contains('server="http://127.0.0.1:8080"');
     }
 
     #[DataSet(['3.*', 'stable', 'rr:3.*@stable'])]

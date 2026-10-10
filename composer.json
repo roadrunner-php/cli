@@ -42,7 +42,7 @@
         "ext-json": "*",
         "composer-runtime-api": "^2.0",
         "composer/semver": "^3.4",
-        "internal/dload": "^1.18",
+        "internal/dload": "dev-feat/repository-server as 1.19.0",
         "roadrunner/worker": "^3.8",
         "spiral/tokenizer": "^2.13 || ^3.15",
         "symfony/console": "^6.4 || ^7.0 || ^8.0",

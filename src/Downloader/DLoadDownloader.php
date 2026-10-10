@@ -35,19 +35,26 @@ final class DLoadDownloader
      */
     private const ENV_GITHUB_API_URL = 'RR_GITHUB_API_URL';
 
+    private const PUBLIC_API_URL = 'https://api.github.com';
+
     /**
-     * The RoadRunner entries of DLoad's built-in registry, with the API host to substitute.
+     * DLoad serves the API of a GitHub Enterprise Server at `{server}/api/v3`, so no other path can be mapped.
      */
-    private const CONFIG_WITH_HOST = <<<'XML'
+    private const ENTERPRISE_API_PATH = '/api/v3';
+
+    /**
+     * The RoadRunner entries of DLoad's built-in registry, with the server to substitute.
+     */
+    private const CONFIG_WITH_SERVER = <<<'XML'
         <?xml version="1.0"?>
         <dload>
             <registry overwrite="false">
                 <software name="RoadRunner" alias="rr">
-                    <repository type="github" uri="roadrunner-server/roadrunner" host="%1$s" asset-pattern="/^roadrunner-.*/"/>
+                    <repository type="github" uri="roadrunner-server/roadrunner" server="%1$s" asset-pattern="/^roadrunner-.*/"/>
                     <binary name="rr" pattern="/^(roadrunner|rr)(?:\.exe)?$/" version-command="--version"/>
                 </software>
                 <software name="ProtoC PHP gRPC Plugin" alias="protoc-gen-php-grpc">
-                    <repository type="github" uri="roadrunner-server/roadrunner" host="%1$s" asset-pattern="/^protoc-gen-php-grpc-.*/"/>
+                    <repository type="github" uri="roadrunner-server/roadrunner" server="%1$s" asset-pattern="/^protoc-gen-php-grpc-.*/"/>
                     <binary name="protoc-gen-php-grpc"/>
                 </software>
             </registry>
@@ -127,25 +134,43 @@ final class DLoadDownloader
     }
 
     /**
-     * DLoad takes a bare host name for `repository.host`: the scheme and the path of the URL are dropped,
-     * a port is kept.
-     *
-     * @return non-empty-string
+     * @return non-empty-string|null `scheme://host[:port]` of a GitHub Enterprise Server, null for the public GitHub.
      */
-    private static function host(string $url): string
+    private static function server(string $url): ?string
     {
-        $parts = \parse_url(\str_contains($url, '://') ? $url : 'https://' . $url);
-        $host = \is_array($parts) ? ($parts['host'] ?? '') : '';
+        $parts = \parse_url(\rtrim(\trim($url), '/'));
+        $parts = \is_array($parts) ? $parts : [];
+        $scheme = \strtolower($parts['scheme'] ?? '');
+        $host = \strtolower($parts['host'] ?? '');
 
-        if ($host === '') {
+        if (! \in_array($scheme, ['http', 'https'], true) || $host === ''
+            || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])
+        ) {
             throw new \InvalidArgumentException(\sprintf('Invalid %s value "%s"', self::ENV_GITHUB_API_URL, $url));
         }
 
-        return isset($parts['port']) ? $host . ':' . $parts['port'] : $host;
+        $server = $scheme . '://' . $host . (isset($parts['port']) ? ':' . $parts['port'] : '');
+        $path = $parts['path'] ?? '';
+
+        if ($server === self::PUBLIC_API_URL && $path === '') {
+            return null;
+        }
+
+        if ($server === self::PUBLIC_API_URL || $path !== self::ENTERPRISE_API_PATH) {
+            throw new \InvalidArgumentException(\sprintf(
+                '%s must be %s or a GitHub Enterprise Server API URL ending with %s, "%s" given',
+                self::ENV_GITHUB_API_URL,
+                self::PUBLIC_API_URL,
+                self::ENTERPRISE_API_PATH,
+                $url,
+            ));
+        }
+
+        return $server;
     }
 
     /**
-     * @return string|null Path to a temporary config pointing DLoad at the GitHub API host, if one is set.
+     * @return string|null Path to a temporary config pointing DLoad at a GitHub Enterprise Server, if one is set.
      */
     private function createConfig(): ?string
     {
@@ -153,14 +178,17 @@ final class DLoadDownloader
             return null;
         }
 
-        $host = \htmlspecialchars(self::host($this->githubApiUrl), \ENT_XML1 | \ENT_QUOTES);
+        $server = self::server($this->githubApiUrl);
+        if ($server === null) {
+            return null;
+        }
 
         $file = \tempnam(\sys_get_temp_dir(), 'rr-dload-');
         if ($file === false) {
             throw new \RuntimeException('Can not create a temporary DLoad config');
         }
 
-        \file_put_contents($file, \sprintf(self::CONFIG_WITH_HOST, $host));
+        \file_put_contents($file, \sprintf(self::CONFIG_WITH_SERVER, \htmlspecialchars($server, \ENT_XML1 | \ENT_QUOTES)));
 
         return $file;
     }
