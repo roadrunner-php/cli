@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - '2.x'
+      - '3.x'
   pull_request: null
 
 name: static analysis
