@@ -3,14 +3,16 @@
 /**
  * A fake GitHub for the acceptance tests, run as `php -S 127.0.0.1:<port> router.php`.
  *
- * The first path segment selects a scenario, so one server serves every test through a different base URL:
+ * A server plays one scenario, named by the FAKE_GITHUB_SCENARIO environment variable: DLoad takes a bare
+ * `scheme://host:port` for a GitHub Enterprise Server, so a scenario can not be a part of the path.
  *  - `github`        — releases from releases.json, paginated by `per_page` like GitHub (30 by default, 100 at most);
  *  - `paged`         — the same releases, 2 per page whatever `per_page` asks for;
  *  - `rate-limit`    — every API request fails with the 403 GitHub sends when the rate limit is exhausted;
  *  - `missing-asset` — releases are listed, but every download is a 404.
  *
- * Release lists are served at `/<scenario>/repos/roadrunner-server/roadrunner/releases`, assets at
- * `/<scenario>/download/<tag>/<asset name>`. Archives are built on request: `roadrunner-<v>-<os>-<arch>/rr[.exe]`
+ * Like GitHub Enterprise Server, the API is served under `/api/v3`: release lists at
+ * `/api/v3/repos/roadrunner-server/roadrunner/releases`, assets at
+ * `/download/<tag>/<asset name>`. Archives are built on request: `roadrunner-<v>-<os>-<arch>/rr[.exe]`
  * holding the text `fake rr <v> <os> <arch>`, so a test can tell which asset ended up installed.
  *
  * Each request is appended to the JSON Lines file named by the FAKE_GITHUB_LOG environment variable.
@@ -23,8 +25,9 @@ declare(strict_types=1);
 $path = (string) \parse_url($_SERVER['REQUEST_URI'], \PHP_URL_PATH);
 \parse_str((string) \parse_url($_SERVER['REQUEST_URI'], \PHP_URL_QUERY), $query);
 $segments = \explode('/', \trim($path, '/'));
-$scenario = \array_shift($segments);
-$base = 'http://' . $_SERVER['HTTP_HOST'] . '/' . $scenario;
+$scenario = (string) \getenv('FAKE_GITHUB_SCENARIO');
+$server = 'http://' . $_SERVER['HTTP_HOST'];
+$api = $server . '/api/v3';
 
 $respond = static function (int $status, string $body, array $headers = []) use ($path, $query): void {
     $log = \getenv('FAKE_GITHUB_LOG');
@@ -90,7 +93,7 @@ if ($scenario === 'rate-limit') {
     return true;
 }
 
-if (\implode('/', $segments) === 'repos/roadrunner-server/roadrunner/releases') {
+if (\implode('/', $segments) === 'api/v3/repos/roadrunner-server/roadrunner/releases') {
     $releases = \json_decode((string) \file_get_contents(__DIR__ . '/releases.json'), true);
     $perPage = $scenario === 'paged' ? 2 : \min(100, \max(1, (int) ($query['per_page'] ?? 30)));
     $page = \max(1, (int) ($query['page'] ?? 1));
@@ -104,16 +107,20 @@ if (\implode('/', $segments) === 'repos/roadrunner-server/roadrunner/releases') 
             'name' => $tag,
             'draft' => false,
             'prerelease' => $release['prerelease'],
+            'published_at' => '2026-01-01T00:00:00Z',
             'assets' => \array_map(static fn(string $asset): array => [
                 'name' => $asset,
-                'browser_download_url' => "$base/download/$tag/$asset",
+                'browser_download_url' => "$server/download/$tag/$asset",
+                // Archives are built on request, so their real size is unknown here
+                'size' => 0,
+                'content_type' => \str_ends_with($asset, '.zip') ? 'application/zip' : 'application/gzip',
             ], $release['assets']),
         ];
     }
 
     $link = static fn(int $to, string $rel): string => \sprintf(
         '<%s/repos/roadrunner-server/roadrunner/releases?per_page=%d&page=%d>; rel="%s"',
-        $base,
+        $api,
         $perPage,
         $to,
         $rel,
