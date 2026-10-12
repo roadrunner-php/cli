@@ -75,6 +75,21 @@ final class ReleasesClientTest
         Assert::same($urls, ['http://127.0.0.1:8080/api/v3/repos/roadrunner-server/roadrunner/releases?page=1&per_page=100']);
     }
 
+    public function sendsToken(): void
+    {
+        $authorization = [];
+        $client = new MockHttpClient(static function (string $method, string $url, array $options) use (&$authorization): MockResponse {
+            $authorization[] = $options['normalized_headers']['authorization'][0] ?? null;
+
+            return new MockResponse('[]');
+        });
+
+        (new ReleasesClient($client))->releases();
+        (new ReleasesClient($client, token: 'secret'))->releases();
+
+        Assert::same($authorization, [null, 'authorization: Bearer secret']);
+    }
+
     public function readsApiUrlFromEnvironment(): void
     {
         // The unsupported scheme makes the client fail before any connection, with the URL in the message
