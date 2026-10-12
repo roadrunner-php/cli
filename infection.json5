@@ -11,7 +11,7 @@
         "text": "runtime/infection.log",
         "github": true,
         "stryker": {
-            "report": "2.x"
+            "report": "/^\\d+\\.x$/"
         }
     }
 }
