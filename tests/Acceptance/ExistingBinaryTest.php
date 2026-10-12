@@ -7,7 +7,6 @@ namespace Spiral\RoadRunner\Console\Tests\Acceptance;
 use Spiral\RoadRunner\Console\Tests\Acceptance\Support\FakeGitHubCase;
 use Testo\Assert;
 use Testo\Data\DataSet;
-use Testo\Skip;
 use Testo\Test;
 
 /**
@@ -43,7 +42,6 @@ final class ExistingBinaryTest
 
     #[DataSet([null], 'no interaction')]
     #[DataSet([['no']], 'declined')]
-    #[Skip('A kept binary exits with 0 and reports success, see https://github.com/roadrunner-php/cli/issues/69')]
     public function failsWhenBinaryIsKept(?array $answers): void
     {
         $this->dir->write('rr', self::OLD);

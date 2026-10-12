@@ -20,3 +20,7 @@
 /src/**          -export-ignore
 /bin             -export-ignore
 /bin/**          -export-ignore
+
+# The empty DLoad config passed to `dload get --config`.
+/resources       -export-ignore
+/resources/**    -export-ignore
