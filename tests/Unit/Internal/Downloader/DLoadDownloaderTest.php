@@ -156,18 +156,54 @@ final class DLoadDownloaderTest
     /**
      * Calendar releases (2025.x) rank above 3.x numerically, so "any version" must not reach DLoad unbounded.
      */
-    #[DataSet(['*', 'stable', 'rr:^3.0@stable'])]
-    #[DataSet([' * ', 'beta', 'rr:^3.0@beta'], 'trimmed')]
-    #[DataSet(['', 'rc', 'rr:^3.0@rc'], 'empty constraint')]
-    #[DataSet(['*@beta', 'stable', 'rr:^3.0@beta'], 'explicit stability')]
-    #[DataSet(['@alpha', 'stable', 'rr:^3.0@alpha'], 'stability only')]
-    public function treatsWildcardAsAnyV3Release(string $constraint, string $stability, string $software): void
+    #[DataSet(['*', 'stable', 'rr:>=3.0 <2000@stable'])]
+    #[DataSet([' * ', 'beta', 'rr:>=3.0 <2000@beta'], 'trimmed')]
+    #[DataSet(['', 'rc', 'rr:>=3.0 <2000@rc'], 'empty constraint')]
+    #[DataSet(['*@beta', 'stable', 'rr:>=3.0 <2000@beta'], 'explicit stability')]
+    #[DataSet(['@alpha', 'stable', 'rr:>=3.0 <2000@alpha'], 'stability only')]
+    public function treatsWildcardAsAnySemverRelease(string $constraint, string $stability, string $software): void
     {
         $get = new DLoadGetSpy();
 
         $this->download($get, constraint: $constraint, stability: $stability);
 
         Assert::same($get->calls[0]->getArgument('software'), [$software]);
+    }
+
+    #[DataSet(['>=3.0', 'rr:>=3.0 <2000@stable'], 'lower bound')]
+    #[DataSet(['>= 2.12', 'rr:>= 2.12 <2000@stable'], 'spaced operator')]
+    #[DataSet(['!=3.1.0', 'rr:!=3.1.0 <2000@stable'], 'exclusion')]
+    #[DataSet(['<>3.1.0', 'rr:<>3.1.0 <2000@stable'], 'exclusion as <>')]
+    #[DataSet(['>=3.0@beta', 'rr:>=3.0 <2000@beta'], 'explicit stability')]
+    #[DataSet(['3.* || >=3.2', 'rr:3.* || >=3.2 <2000@stable'], 'each alternative')]
+    #[DataSet(['>=3.0 | 2025.*', 'rr:>=3.0 <2000 || 2025.*@stable'], 'single pipe')]
+    public function keepsUnboundedFilterBelowCalendarReleases(string $constraint, string $software): void
+    {
+        $get = new DLoadGetSpy();
+
+        $this->download($get, constraint: $constraint);
+
+        Assert::same($get->calls[0]->getArgument('software'), [$software]);
+    }
+
+    #[DataSet(['3.4.0'], 'exact release')]
+    #[DataSet(['3.5.0-beta.1'], 'exact pre-release')]
+    #[DataSet(['^3.2'], 'caret')]
+    #[DataSet(['~3.2.0'], 'tilde')]
+    #[DataSet(['3.x'], 'wildcard')]
+    #[DataSet(['>=3.0 <3.4'], 'upper bound')]
+    #[DataSet(['3.0 - 3.4'], 'hyphen range')]
+    #[DataSet(['3.* || 2025.*'], 'calendar alternative')]
+    #[DataSet(['2025.*'], 'calendar wildcard')]
+    #[DataSet(['2025.1.5'], 'calendar release')]
+    #[DataSet(['>=2024'], 'calendar lower bound')]
+    public function keepsBoundedOrCalendarFilter(string $constraint): void
+    {
+        $get = new DLoadGetSpy();
+
+        $this->download($get, constraint: $constraint, stability: 'beta');
+
+        Assert::same($get->calls[0]->getArgument('software'), ['rr:' . $constraint . '@beta']);
     }
 
     public function returnsDLoadExitCode(): void

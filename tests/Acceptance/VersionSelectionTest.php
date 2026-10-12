@@ -32,6 +32,7 @@ final class VersionSelectionTest
     #[DataSet(['3.1.*', '3.1.0'])]
     #[DataSet(['2025.*', '2025.1.5'])]
     #[DataSet(['^2.12', '2.12.3'])]
+    #[DataSet(['>=2024', '2025.1.5'])]
     public function installsNewestReleaseMatchingFilter(string $filter, string $version): void
     {
         $result = $this->rr()->run(['get', '--filter=' . $filter, '--os=linux', '--arch=amd64']);
@@ -53,12 +54,29 @@ final class VersionSelectionTest
         Assert::same(\trim($this->dir->read('rr')), "fake rr $version linux amd64");
     }
 
-    public function treatsWildcardFilterAsAnyV3ProtocPlugin(): void
+    #[DataSet(['*'])]
+    #[DataSet(['>=3.0'])]
+    public function keepsProtocPluginFilterBelowCalendarReleases(string $filter): void
     {
-        $result = $this->rr()->run(['download-protoc-binary', '--filter=*', '--os=linux', '--arch=amd64']);
+        $result = $this->rr()->run(['download-protoc-binary', '--filter=' . $filter, '--os=linux', '--arch=amd64']);
 
         Assert::same($result->exitCode, 0, (string) $result);
         Assert::same(\trim($this->dir->read('protoc-gen-php-grpc')), 'fake rr 3.4.0 linux amd64');
+    }
+
+    /**
+     * A filter without an upper bound stays below 2025.1.5, which DLoad ranks above 3.x by number.
+     */
+    #[DataSet(['>=3.0'])]
+    #[DataSet(['>=2.12'])]
+    #[DataSet(['!=3.1.0'])]
+    #[DataSet(['^2.12 || >=3.2'])]
+    public function keepsUnboundedFilterBelowCalendarReleases(string $filter): void
+    {
+        $result = $this->rr()->run(['get', '--filter=' . $filter, '--os=linux', '--arch=amd64']);
+
+        Assert::same($result->exitCode, 0, (string) $result);
+        Assert::same(\trim($this->dir->read('rr')), 'fake rr 3.4.0 linux amd64');
     }
 
     #[DataSet(['stable', '3.*', '3.4.0'])]
