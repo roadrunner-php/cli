@@ -8,7 +8,7 @@
     resolveFromConfigFile="true"
     findUnusedPsalmSuppress="true"
     findUnusedBaselineEntry="true"
-    findUnusedCode="false"
+    findUnusedCode="true"
     findUnusedVariablesAndParams="true"
     ensureArrayStringOffsetsExist="true"
     addParamDefaultToDocblockType="true"
