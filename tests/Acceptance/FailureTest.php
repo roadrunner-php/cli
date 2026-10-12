@@ -8,7 +8,6 @@ use Spiral\RoadRunner\Console\Tests\Acceptance\Support\FakeGitHub;
 use Spiral\RoadRunner\Console\Tests\Acceptance\Support\FakeGitHubCase;
 use Testo\Assert;
 use Testo\Data\DataSet;
-use Testo\Skip;
 use Testo\Test;
 
 /**
@@ -69,7 +68,6 @@ final class FailureTest
 
     #[DataSet([['--os=plan9']], 'operating system')]
     #[DataSet([['--arch=sparc']], 'architecture')]
-    #[Skip('An unknown --os or --arch still fetches the releases, see https://github.com/roadrunner-php/cli/issues/68')]
     public function rejectsUnknownPlatformWithoutRequests(array $options): void
     {
         $result = $this->rr()->run([...self::ARGS, ...$options]);

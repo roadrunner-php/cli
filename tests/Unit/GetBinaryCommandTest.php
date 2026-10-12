@@ -4,18 +4,13 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Tests\Unit;
 
+use Spiral\RoadRunner\Console\Downloader\DLoadDownloader;
 use Spiral\RoadRunner\Console\GetBinaryCommand;
-use Spiral\RoadRunner\Console\Repository\ReleaseInterface;
-use Spiral\RoadRunner\Console\Repository\RepositoryInterface;
-use Spiral\RoadRunner\Console\Tests\Unit\Stub\InMemoryRepository;
-use Spiral\RoadRunner\Console\Tests\Unit\Stub\Releases;
+use Spiral\RoadRunner\Console\Tests\Unit\Stub\DLoadGetSpy;
 use Spiral\RoadRunner\Console\Tests\Unit\Stub\TempDirectory;
 use Symfony\Component\Console\Tester\CommandTester;
-use Symfony\Component\HttpClient\MockHttpClient;
-use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Yaml\Yaml;
 use Testo\Assert;
-use Testo\Expect;
 use Testo\Lifecycle\AfterTest;
 use Testo\Lifecycle\BeforeTest;
 use Testo\Test;
@@ -25,10 +20,6 @@ final class GetBinaryCommandTest
 {
     private string $dir;
     private string $target;
-
-    /** @var list<string> */
-    private array $downloads = [];
-
     private string $cwd;
 
     /**
@@ -60,60 +51,66 @@ final class GetBinaryCommandTest
         Assert::same($command->getDescription(), 'Install or update RoadRunner binary');
     }
 
-    public function installsBinaryOfNewestMatchingRelease(): void
+    public function keepsOptions(): void
     {
-        $tester = $this->tester(
-            $this->release('v2024.1.0', ['roadrunner-2024.1.0-linux-amd64.zip']),
-            $this->release('v2024.2.0', [
-                'roadrunner-2024.2.0-linux-amd64.deb',
-                'roadrunner-2024.2.0-linux-amd64.zip',
-                'roadrunner-2024.2.0-darwin-amd64.zip',
-                'roadrunner-2024.2.0-linux-arm64.zip',
-            ]),
-            $this->release('v2024.3.0-beta.1', ['roadrunner-2024.3.0-beta.1-linux-amd64.zip']),
-            $this->release('v2025.1.0', ['roadrunner-2025.1.0-linux-amd64.zip']),
+        Assert::array(\array_keys((new GetBinaryCommand())->getDefinition()->getOptions()))
+            ->sameElementsAs(['os', 'arch', 'filter', 'location', 'stability', 'plugin', 'preset', 'no-config']);
+    }
+
+    public function installsBinaryThroughDLoad(): void
+    {
+        $get = new DLoadGetSpy();
+        $tester = $this->tester($get);
+
+        $status = $tester->execute(
+            $this->input(['--no-config' => true, '--stability' => 'beta']),
+            ['interactive' => false],
         );
 
-        $status = $tester->execute($this->input(['--no-config' => true]), ['interactive' => false]);
-
         Assert::same($status, 0);
-        Assert::same($this->downloads, ['https://example.com/download/roadrunner-2024.2.0-linux-amd64.zip']);
-        Assert::same(\file_get_contents($this->target . '/rr'), 'binary v2024.2.0');
+        Assert::count($get->calls, 1);
+        Assert::same($get->calls[0]->getArgument('software'), ['rr:^2024.1@beta']);
+        Assert::same($get->calls[0]->getOption('path'), $this->target);
+        Assert::same($get->calls[0]->getOption('os'), 'linux');
+        Assert::same($get->calls[0]->getOption('arch'), 'amd64');
+        Assert::same(\file_get_contents($this->target . '/rr'), 'new binary');
         Assert::false(\is_file($this->target . '/.rr.yaml'));
         Assert::string($tester->getDisplay())
-            ->contains('roadrunner-server/roadrunner (v2024.2.0): Downloading...')
-            ->contains('RoadRunner (v2024.2.0) has been installed into');
+            ->contains('Version:          ^2024.1')
+            ->contains('Stability:        beta')
+            ->contains('dload: rr:^2024.1@beta')
+            ->ignoringWhitespace(lineBreaks: true)
+            ->contains('Your project is now ready in ' . $this->target)
+            ->contains('$ rr serve');
     }
 
-    public function skipsReleasesWithoutSuitableAssembly(): void
+    public function installsWindowsBinary(): void
     {
-        $tester = $this->tester(
-            $this->release('v2024.1.0', ['roadrunner-2024.1.0-linux-amd64.zip']),
-            $this->release('v2024.2.0', ['roadrunner-2024.2.0-darwin-amd64.zip']),
+        $tester = $this->tester(new DLoadGetSpy(binary: 'rr.exe'));
+
+        $status = $tester->execute(
+            $this->input(['--no-config' => true, '--os' => 'windows']),
+            ['interactive' => false],
         );
 
-        $status = $tester->execute($this->input(['--no-config' => true]), ['interactive' => false]);
-
         Assert::same($status, 0);
-        Assert::same(\file_get_contents($this->target . '/rr'), 'binary v2024.1.0');
-        Assert::string($tester->getDisplay())
-            ->ignoringWhitespace(lineBreaks: true)
-            ->contains('roadrunner-server/roadrunner v2024.2.0 does not contain available assembly');
+        Assert::string($tester->getDisplay())->contains('$ rr.exe serve');
     }
 
-    public function failsWhenNoReleaseHasSuitableAssembly(): never
+    public function failsWhenDLoadFails(): void
     {
-        $tester = $this->tester($this->release('v2024.1.0', ['roadrunner-2024.1.0-darwin-amd64.zip']));
+        $tester = $this->tester(new DLoadGetSpy(exitCode: 1));
 
-        Expect::exception(\UnexpectedValueException::class)
-            ->withMessageContaining('(--os=linux --arch=amd64 --stability=stable). Available: v2024.1.0');
+        $status = $tester->execute($this->input(['--preset' => 'web']), ['interactive' => false]);
 
-        $tester->execute($this->input(['--no-config' => true]), ['interactive' => false]);
+        Assert::same($status, 1);
+        Assert::false(\is_file($this->target . '/.rr.yaml'));
+        Assert::string($tester->getDisplay())->notContains('Your project is now ready');
     }
 
     public function generatesConfigurationForPreset(): void
     {
-        $tester = $this->tester($this->release('v2024.1.0', ['roadrunner-2024.1.0-linux-amd64.zip']));
+        $tester = $this->tester(new DLoadGetSpy());
 
         $status = $tester->execute($this->input(['--preset' => 'web']), ['interactive' => false]);
 
@@ -122,10 +119,21 @@ final class GetBinaryCommandTest
             ->sameElementsAs(['version', 'rpc', 'http', 'jobs', 'server']);
     }
 
+    public function generatesConfigurationForPlugins(): void
+    {
+        $tester = $this->tester(new DLoadGetSpy());
+
+        $status = $tester->execute($this->input(['--plugin' => ['kv']]), ['interactive' => false]);
+
+        Assert::same($status, 0);
+        Assert::array(\array_keys(Yaml::parseFile($this->target . '/.rr.yaml')))
+            ->sameElementsAs(['version', 'rpc', 'kv']);
+    }
+
     public function keepsExistingConfiguration(): void
     {
         \file_put_contents($this->target . '/.rr.yaml', 'existing');
-        $tester = $this->tester($this->release('v2024.1.0', ['roadrunner-2024.1.0-linux-amd64.zip']));
+        $tester = $this->tester(new DLoadGetSpy());
 
         $status = $tester->execute($this->input(['--plugin' => ['kv']]), ['interactive' => false]);
 
@@ -133,28 +141,47 @@ final class GetBinaryCommandTest
         Assert::same(\file_get_contents($this->target . '/.rr.yaml'), 'existing');
     }
 
+    public function keepsConfigurationInWorkingDirectory(): void
+    {
+        \file_put_contents($this->dir . '/cwd/.rr.yaml', 'existing');
+        $tester = $this->tester(new DLoadGetSpy());
+
+        $status = $tester->execute($this->input(['--plugin' => ['kv']]), ['interactive' => false]);
+
+        Assert::same($status, 0);
+        Assert::false(\is_file($this->target . '/.rr.yaml'));
+    }
+
     public function keepsExistingBinaryUnlessConfirmed(): void
     {
         \file_put_contents($this->target . '/rr', 'old binary');
-        $tester = $this->tester($this->release('v2024.1.0', ['roadrunner-2024.1.0-linux-amd64.zip']));
+        $get = new DLoadGetSpy();
+        $tester = $this->tester($get);
 
-        $tester->execute($this->input(['--no-config' => true]), ['interactive' => false]);
+        $status = $tester->execute($this->input(['--preset' => 'web']), ['interactive' => false]);
 
+        Assert::same($status, 1);
+        Assert::same($get->calls, []);
         Assert::same(\file_get_contents($this->target . '/rr'), 'old binary');
+        Assert::true(\is_file($this->target . '/.rr.yaml'));
         Assert::string($tester->getDisplay())
             ->contains('RoadRunner binary file already exists!')
-            ->contains('Skipping RoadRunner installation...');
+            ->contains('Skipping RoadRunner installation...')
+            ->contains('RoadRunner has not been installed');
     }
 
     public function overwritesExistingBinaryWhenConfirmed(): void
     {
         \file_put_contents($this->target . '/rr', 'old binary');
-        $tester = $this->tester($this->release('v2024.1.0', ['roadrunner-2024.1.0-linux-amd64.zip']));
+        $get = new DLoadGetSpy();
+        $tester = $this->tester($get);
         $tester->setInputs(['yes']);
 
-        $tester->execute($this->input(['--no-config' => true]));
+        $status = $tester->execute($this->input(['--no-config' => true]));
 
-        Assert::same(\file_get_contents($this->target . '/rr'), 'binary v2024.1.0');
+        Assert::same($status, 0);
+        Assert::true($get->calls[0]->getOption('force'));
+        Assert::same(\file_get_contents($this->target . '/rr'), 'new binary');
     }
 
     /**
@@ -163,49 +190,16 @@ final class GetBinaryCommandTest
      */
     private function input(array $input): array
     {
-        return [
+        return $input + [
             '--location' => $this->target,
             '--os' => 'linux',
             '--arch' => 'amd64',
             '--filter' => '^2024.1',
-        ] + $input;
+        ];
     }
 
-    /**
-     * Creates a release whose assets are zip archives with an "rr" file named after the release.
-     *
-     * @param list<string> $assets
-     */
-    private function release(string $tag, array $assets): ReleaseInterface
+    private function tester(DLoadGetSpy $get): CommandTester
     {
-        $archive = TempDirectory::archive($this->dir, \bin2hex(\random_bytes(4)) . '.zip', [
-            'roadrunner/rr' => 'binary ' . $tag,
-        ]);
-        $content = (string) \file_get_contents($archive);
-        $client = new MockHttpClient(function (string $method, string $url) use ($content): MockResponse {
-            $this->downloads[] = $url;
-
-            return new MockResponse($content);
-        });
-
-        return Releases::release($tag, $assets, $client);
-    }
-
-    private function tester(ReleaseInterface ...$releases): CommandTester
-    {
-        $command = new class(new InMemoryRepository(...$releases)) extends GetBinaryCommand {
-            public function __construct(
-                private readonly RepositoryInterface $repository,
-            ) {
-                parent::__construct();
-            }
-
-            protected function getRepository(): RepositoryInterface
-            {
-                return $this->repository;
-            }
-        };
-
-        return new CommandTester($command);
+        return new CommandTester(new GetBinaryCommand(downloader: new DLoadDownloader($get)));
     }
 }
