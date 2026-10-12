@@ -4,16 +4,32 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Internal\Configuration;
 
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Amqp;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Beanstalk;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Boltdb;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Broadcast;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Endure;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Fileserver;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Grpc;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Http;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Jobs;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Kv;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Logs;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Metrics;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Nats;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Otel;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Redis;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Reload;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Rpc;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\SectionInterface;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Server;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Service;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Sqs;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Status;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Tcp;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Temporal;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Version;
-use Spiral\Tokenizer\ClassLocator;
-use Symfony\Component\Finder\Finder;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Websockets;
 
 /**
  * @internal
@@ -21,11 +37,42 @@ use Symfony\Component\Finder\Finder;
 final class Plugins
 {
     /**
-     * @psalm-var list<class-string<SectionInterface>>
+     * Every section a plugin can be requested by.
      *
-     * Default plugins in a class-string format.
+     * @var list<class-string<SectionInterface>>
      */
-    private array $defaultPlugins = [
+    private const AVAILABLE = [
+        Amqp::class,
+        Beanstalk::class,
+        Boltdb::class,
+        Broadcast::class,
+        Endure::class,
+        Fileserver::class,
+        Grpc::class,
+        Http::class,
+        Jobs::class,
+        Kv::class,
+        Logs::class,
+        Metrics::class,
+        Nats::class,
+        Otel::class,
+        Redis::class,
+        Reload::class,
+        Rpc::class,
+        Server::class,
+        Service::class,
+        Sqs::class,
+        Status::class,
+        Tcp::class,
+        Temporal::class,
+        Version::class,
+        Websockets::class,
+    ];
+
+    /**
+     * @var list<class-string<SectionInterface>>
+     */
+    private const DEFAULT = [
         Version::class,
         Rpc::class,
         Server::class,
@@ -36,27 +83,11 @@ final class Plugins
     ];
 
     /**
-     * @var string[]
-     *
-     * Requested plugins in a shortname format.
+     * @param string[] $requestedPlugins Plugin short names.
      */
-    private array $requestedPlugins;
-
-    /**
-     * @psalm-var list<class-string<SectionInterface>>
-     *
-     * All plugins.
-     */
-    private array $available;
-
-    /**
-     * @param string[] $plugins
-     */
-    private function __construct(array $plugins)
-    {
-        $this->available = $this->getAvailable();
-        $this->requestedPlugins = $plugins;
-    }
+    private function __construct(
+        private readonly array $requestedPlugins,
+    ) {}
 
     /**
      * @param string[] $plugins Plugin short names.
@@ -68,15 +99,9 @@ final class Plugins
 
     public static function fromPreset(string $preset): self
     {
-        $plugins = [];
-        switch ($preset) {
-            case Presets::WEB_PRESET_NANE:
-                $plugins = Presets::WEB_PLUGINS;
-        }
+        $plugins = $preset === Presets::WEB_PRESET_NANE ? Presets::WEB_PLUGINS : [];
 
-        return new self(\array_map(static function (string $plugin) {
-            return $plugin::getShortName();
-        }, $plugins));
+        return new self(\array_map(static fn(string $plugin): string => $plugin::getShortName(), $plugins));
     }
 
     /**
@@ -85,43 +110,16 @@ final class Plugins
     public function getPlugins(): array
     {
         if ($this->requestedPlugins === []) {
-            return $this->defaultPlugins;
+            return self::DEFAULT;
         }
 
         $plugins = [];
-        foreach ($this->available as $plugin) {
+        foreach (self::AVAILABLE as $plugin) {
             if (\in_array($plugin::getShortName(), $this->requestedPlugins, true)) {
                 $plugins[] = $plugin;
             }
         }
 
         return $plugins;
-    }
-
-    /**
-     * @return list<class-string<SectionInterface>>
-     */
-    private function getAvailable(): array
-    {
-        $finder = new Finder();
-        $finder->files()->in(__DIR__ . '/Section')->name('*.php');
-
-        $locator = new ClassLocator($finder);
-
-        $available = [];
-        foreach ($locator->getClasses() as $class) {
-            if ($this->isPlugin($class)) {
-                /** @var class-string<SectionInterface> $name */
-                $name = $class->getName();
-                $available[] = $name;
-            }
-        }
-
-        return $available;
-    }
-
-    private function isPlugin(\ReflectionClass $class): bool
-    {
-        return $class->implementsInterface(SectionInterface::class) && !$class->isAbstract() && !$class->isInterface();
     }
 }
