@@ -108,9 +108,13 @@ final class FakeGitHub
     private static function startServer(string $scenario): string
     {
         self::start();
-        $port = self::freePort();
-
         $env = Rr::baseEnvironment();
+        if ($scenario === 'redirect') {
+            // Before the port is picked: the target server takes a free port too
+            $env['FAKE_GITHUB_REDIRECT_TO'] = \dirname(self::url(), 2);
+        }
+
+        $port = self::freePort();
         $env['FAKE_GITHUB_LOG'] = self::$log;
         $env['FAKE_GITHUB_SCENARIO'] = $scenario;
 

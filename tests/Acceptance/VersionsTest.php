@@ -76,12 +76,37 @@ final class VersionsTest
         Assert::same(\array_column(\array_column(FakeGitHub::releaseRequests(), 'query'), 'page'), ['1', '2', '3', '4']);
     }
 
-    public function sendsGitHubToken(): void
+    public function keepsGitHubTokenFromEnterpriseServer(): void
     {
-        $result = $this->rr()->withEnv('GITHUB_TOKEN', 'token')->run(self::ARGS);
+        $result = $this->rr()->withEnv('GITHUB_TOKEN', 'github-com-token')->run(self::ARGS);
+
+        Assert::same($result->exitCode, 0, (string) $result);
+        Assert::same(\array_column(FakeGitHub::releaseRequests(), 'authorized'), [false]);
+    }
+
+    public function sendsTokenDeclaredForEnterpriseServer(): void
+    {
+        $result = $this->rr()->withEnv(self::tokenVariable(FakeGitHub::url()), 'server-token')->run(self::ARGS);
 
         Assert::same($result->exitCode, 0, (string) $result);
         Assert::same(\array_column(FakeGitHub::releaseRequests(), 'authorized'), [true]);
+    }
+
+    public function dropsTokenOnRedirectToAnotherServer(): void
+    {
+        $url = FakeGitHub::url('redirect');
+
+        $result = $this->rr($url)->withEnv(self::tokenVariable($url), 'server-token')->run(self::ARGS);
+
+        Assert::same($result->exitCode, 0, (string) $result);
+        Assert::same(self::releases($result->stdout), ['3.4.0', '3.2.0', '3.1.0', '2025.1.5', '2.12.3']);
+        Assert::same(
+            \array_map(
+                static fn(array $request): array => [$request['status'], $request['authorized']],
+                FakeGitHub::releaseRequests(),
+            ),
+            [[302, true], [200, false]],
+        );
     }
 
     public function failsWhenRateLimited(): void
@@ -97,6 +122,11 @@ final class VersionsTest
         $result = $this->rr(FakeGitHub::unreachableUrl())->run(self::ARGS);
 
         Assert::notSame($result->exitCode, 0, (string) $result);
+    }
+
+    private static function tokenVariable(string $apiUrl): string
+    {
+        return 'DLOAD_TOKEN_127_0_0_1___' . \parse_url($apiUrl, \PHP_URL_PORT);
     }
 
     /**

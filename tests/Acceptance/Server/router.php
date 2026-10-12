@@ -8,7 +8,8 @@
  *  - `github`        — releases from releases.json, paginated by `per_page` like GitHub (30 by default, 100 at most);
  *  - `paged`         — the same releases, 2 per page whatever `per_page` asks for;
  *  - `rate-limit`    — every API request fails with the 403 GitHub sends when the rate limit is exhausted;
- *  - `missing-asset` — releases are listed, but every download is a 404.
+ *  - `missing-asset` — releases are listed, but every download is a 404;
+ *  - `redirect`      — every request is redirected to the same path of the server named by FAKE_GITHUB_REDIRECT_TO.
  *
  * Like GitHub Enterprise Server, the API is served under `/api/v3`: release lists at
  * `/api/v3/repos/roadrunner-server/roadrunner/releases`, assets at
@@ -78,6 +79,12 @@ $archive = static function (string $name): ?string {
 
     return $content;
 };
+
+if ($scenario === 'redirect') {
+    $respond(302, '', ['Location' => \getenv('FAKE_GITHUB_REDIRECT_TO') . $_SERVER['REQUEST_URI']]);
+
+    return true;
+}
 
 if ($scenario === 'rate-limit') {
     $respond(403, \json_encode([

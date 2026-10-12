@@ -24,7 +24,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class ReleasesClient
 {
     private const DEFAULT_API_URL = 'https://api.github.com';
-    private const ENV_GITHUB_TOKEN = 'GITHUB_TOKEN';
 
     /**
      * Not `GITHUB_API_URL`: GitHub Actions sets that one in every job.
@@ -42,29 +41,26 @@ final class ReleasesClient
 
     /**
      * @param string $apiUrl Base URL of the GitHub REST API: GitHub Enterprise, a mirror or a mock server.
+     * @param string|null $token Sent with every request; the HTTP client drops it on a redirect to another
+     *        scheme, host or port.
      */
     public function __construct(
         private readonly HttpClientInterface $client,
         string $apiUrl = self::DEFAULT_API_URL,
+        private readonly ?string $token = null,
     ) {
         $this->apiUrl = \rtrim($apiUrl, '/');
     }
 
     /**
-     * Takes the API URL from RR_GITHUB_API_URL and the token from GITHUB_TOKEN, the token is sent to any API URL.
+     * Takes the API URL from RR_GITHUB_API_URL and the token for it as DLoad does, see {@see Token}.
      */
     public static function fromEnvironment(): self
     {
-        $token = Environment::get(self::ENV_GITHUB_TOKEN);
         $apiUrl = Environment::get(self::ENV_GITHUB_API_URL);
+        $apiUrl = $apiUrl !== null && $apiUrl !== '' ? $apiUrl : self::DEFAULT_API_URL;
 
-        $client = HttpClient::create([
-            'headers' => \array_filter([
-                'authorization' => $token !== null && $token !== '' ? 'token ' . $token : null,
-            ]),
-        ]);
-
-        return new self($client, $apiUrl !== null && $apiUrl !== '' ? $apiUrl : self::DEFAULT_API_URL);
+        return new self(HttpClient::create(), $apiUrl, Token::forApiUrl($apiUrl));
     }
 
     /**
@@ -78,7 +74,10 @@ final class ReleasesClient
 
         do {
             $response = $this->client->request('GET', $this->apiUrl . '/repos/' . self::REPOSITORY . '/releases', [
-                'headers' => ['accept' => 'application/vnd.github.v3+json'],
+                'headers' => \array_filter([
+                    'accept' => 'application/vnd.github.v3+json',
+                    'authorization' => $this->token === null ? null : 'Bearer ' . $this->token,
+                ]),
                 'query' => ['page' => ++$page, 'per_page' => self::PER_PAGE],
             ]);
 
