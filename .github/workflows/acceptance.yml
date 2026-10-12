@@ -47,15 +47,17 @@ jobs:
       - name: Run acceptance tests
         run: php vendor/bin/testo --suite=Acceptance
 
+  # rr against the real GitHub: about 6 API requests per job with a cold DLoad cache, 5 with a warm one
   live:
-    name: Live GitHub, ${{ matrix.os }}
-    if: github.event_name == 'workflow_dispatch'
+    name: Live GitHub
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+    env:
+      DLOAD_CACHE_DIR: ${{ github.workspace }}/runtime/dload-cache
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -74,8 +76,30 @@ jobs:
         with:
           dependency-versions: highest
 
+      # Release metadata only, no binaries or tokens. A cache key is never overwritten,
+      # so every run saves its own registry and the next run starts from the newest one.
+      - name: Restore DLoad version registry
+        uses: actions/cache@v6
+        with:
+          path: runtime/dload-cache
+          key: dload-registry-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: dload-registry-${{ runner.os }}-
+
+      - name: GitHub API usage before
+        run: gh api rate_limit --jq '.resources.core | "used \(.used) of \(.limit)"'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Run live tests
         run: php vendor/bin/testo --suite=Live
         env:
           RR_CLI_LIVE_TESTS: '1'
           GITHUB_TOKEN: ${{ github.token }}
+
+      - name: GitHub API usage after
+        if: always()
+        run: gh api rate_limit --jq '.resources.core | "used \(.used) of \(.limit)"'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
