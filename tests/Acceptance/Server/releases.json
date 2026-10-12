@@ -37,6 +37,7 @@
         "prerelease": false,
         "assets": [
             "roadrunner-2025.1.5-linux-amd64.tar.gz",
+            "protoc-gen-php-grpc-2025.1.5-linux-amd64.tar.gz",
             "roadrunner-2025.1.5-linux-arm64.tar.gz",
             "roadrunner-2025.1.5-darwin-arm64.tar.gz",
             "roadrunner-2025.1.5-windows-amd64.zip"

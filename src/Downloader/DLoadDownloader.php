@@ -38,6 +38,12 @@ final class DLoadDownloader
     private const PUBLIC_API_URL = 'https://api.github.com';
 
     /**
+     * What `*` stands for. RoadRunner went from calendar versions back to 3.x, and DLoad orders versions
+     * numerically, so without a bound `2025.1.x` would win over every 3.x release; 2025 is `2025.*`.
+     */
+    private const ANY_VERSION = '^3.0';
+
+    /**
      * DLoad serves the API of a GitHub Enterprise Server at `scheme://host[:port]/api/v3`, so no other path can be mapped.
      */
     private const ENTERPRISE_API_PATH = '/api/v3';
@@ -80,7 +86,7 @@ final class DLoadDownloader
 
     /**
      * @param non-empty-string $software DLoad software alias, e.g. "rr" or "protoc-gen-php-grpc".
-     * @param string $constraint Composer version constraint; "*" means any version.
+     * @param string $constraint Composer version constraint; "*" or empty means any 3.x version.
      * @param string $stability Minimum stability, e.g. "stable" or "beta".
      * @param bool $force Overwrite the binary if it already exists in the location.
      *
@@ -122,17 +128,17 @@ final class DLoadDownloader
 
     /**
      * DLoad ignores `--stability` once a version is given: the stability has to be a part of the constraint.
-     * It also rejects "*", which is the same as no constraint.
      */
     private static function versionSuffix(string $constraint, string $stability): string
     {
-        $constraint = \trim($constraint);
+        [$version, $explicitStability] = \explode('@', \trim($constraint), 2) + [1 => null];
+        $version = \trim($version);
 
-        if ($constraint === '' || $constraint === '*') {
-            return '';
+        if ($version === '' || $version === '*') {
+            $version = self::ANY_VERSION;
         }
 
-        return ':' . (\str_contains($constraint, '@') ? $constraint : $constraint . '@' . $stability);
+        return ':' . $version . '@' . ($explicitStability ?? $stability);
     }
 
     /**

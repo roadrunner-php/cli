@@ -40,6 +40,27 @@ final class VersionSelectionTest
         Assert::same(\trim($this->dir->read('rr')), "fake rr $version linux amd64");
     }
 
+    /**
+     * 2025.1.5 is newer than any 3.x by number, but `*` stands for 3.x.
+     */
+    #[DataSet(['stable', '3.4.0'])]
+    #[DataSet(['beta', '3.5.0-rc.1'])]
+    public function treatsWildcardFilterAsAnyV3Release(string $stability, string $version): void
+    {
+        $result = $this->rr()->run(['get', '--filter=*', '--stability=' . $stability, '--os=linux', '--arch=amd64']);
+
+        Assert::same($result->exitCode, 0, (string) $result);
+        Assert::same(\trim($this->dir->read('rr')), "fake rr $version linux amd64");
+    }
+
+    public function treatsWildcardFilterAsAnyV3ProtocPlugin(): void
+    {
+        $result = $this->rr()->run(['download-protoc-binary', '--filter=*', '--os=linux', '--arch=amd64']);
+
+        Assert::same($result->exitCode, 0, (string) $result);
+        Assert::same(\trim($this->dir->read('protoc-gen-php-grpc')), 'fake rr 3.4.0 linux amd64');
+    }
+
     #[DataSet(['stable', '3.*', '3.4.0'])]
     #[DataSet(['RC', '3.*', '3.5.0-rc.1'])]
     public function honoursMinimumStability(string $stability, string $filter, string $version): void

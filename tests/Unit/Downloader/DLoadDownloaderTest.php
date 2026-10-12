@@ -143,8 +143,6 @@ final class DLoadDownloaderTest
     #[DataSet(['3.*', 'stable', 'rr:3.*@stable'])]
     #[DataSet([' 2025.1.* ', 'rc', 'rr:2025.1.*@rc'], 'trimmed')]
     #[DataSet(['3.*@beta', 'stable', 'rr:3.*@beta'], 'explicit stability')]
-    #[DataSet(['*', 'beta', 'rr'], 'any version')]
-    #[DataSet(['', 'stable', 'rr'], 'empty constraint')]
     public function putsStabilityIntoVersionConstraint(string $constraint, string $stability, string $software): void
     {
         $get = new DLoadGetSpy();
@@ -153,6 +151,23 @@ final class DLoadDownloaderTest
 
         Assert::same($get->calls[0]->getArgument('software'), [$software]);
         Assert::same($get->calls[0]->getOption('stability'), $stability);
+    }
+
+    /**
+     * Calendar releases (2025.x) rank above 3.x numerically, so "any version" must not reach DLoad unbounded.
+     */
+    #[DataSet(['*', 'stable', 'rr:^3.0@stable'])]
+    #[DataSet([' * ', 'beta', 'rr:^3.0@beta'], 'trimmed')]
+    #[DataSet(['', 'rc', 'rr:^3.0@rc'], 'empty constraint')]
+    #[DataSet(['*@beta', 'stable', 'rr:^3.0@beta'], 'explicit stability')]
+    #[DataSet(['@alpha', 'stable', 'rr:^3.0@alpha'], 'stability only')]
+    public function treatsWildcardAsAnyV3Release(string $constraint, string $stability, string $software): void
+    {
+        $get = new DLoadGetSpy();
+
+        $this->download($get, constraint: $constraint, stability: $stability);
+
+        Assert::same($get->calls[0]->getArgument('software'), [$software]);
     }
 
     public function returnsDLoadExitCode(): void
