@@ -16,3 +16,6 @@ jobs:
       os: >-
         ['ubuntu-latest']
       run: vendor/bin/testo --suite=Unit
+      codecov: true
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
