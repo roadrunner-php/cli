@@ -11,66 +11,16 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console;
 
-use Spiral\RoadRunner\Console\Environment\Environment;
-use Spiral\RoadRunner\Console\Repository\GitHub\GitHubRepository;
-use Spiral\RoadRunner\Console\Repository\RepositoriesCollection;
-use Spiral\RoadRunner\Console\Repository\RepositoryInterface;
 use Symfony\Component\Console\Command\Command as BaseCommand;
-use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Style\StyleInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\HttpClient\HttpClient;
 
 abstract class Command extends BaseCommand
 {
-    /**
-     * @var string
-     */
-    private const ENV_GITHUB_TOKEN = 'GITHUB_TOKEN';
-
-    /**
-     * Not `GITHUB_API_URL`: GitHub Actions sets that one in every job.
-     *
-     * @var string
-     */
-    private const ENV_GITHUB_API_URL = 'RR_GITHUB_API_URL';
-
-    protected function getRepository(): RepositoryInterface
-    {
-        $token = Environment::get(self::ENV_GITHUB_TOKEN);
-        $apiUrl = Environment::get(self::ENV_GITHUB_API_URL);
-
-        $client = HttpClient::create([
-            'headers' => \array_filter([
-                'authorization' => $token !== null && $token !== '' ? 'token ' . $token : null,
-            ]),
-        ]);
-
-        return new RepositoriesCollection([
-            GitHubRepository::create(
-                'roadrunner-server',
-                'roadrunner',
-                $client,
-                $apiUrl !== null && $apiUrl !== '' ? $apiUrl : GitHubRepository::DEFAULT_API_URL,
-            ),
-        ]);
-    }
-
     protected function io(InputInterface $input, OutputInterface $output): StyleInterface
     {
         return new SymfonyStyle($input, $output);
-    }
-
-    protected function confirm(InputInterface $input, OutputInterface $out, string $message): bool
-    {
-        $question = new ConfirmationQuestion($message);
-
-        /** @var QuestionHelper $helper */
-        $helper = $this->getHelper('question');
-
-        return (bool) $helper->ask($input, $out, $question);
     }
 }

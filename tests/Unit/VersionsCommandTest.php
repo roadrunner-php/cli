@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace Spiral\RoadRunner\Console\Tests\Unit;
 
 use Spiral\RoadRunner\Console\Environment\RoadRunnerVersion;
-use Spiral\RoadRunner\Console\Repository\ReleaseInterface;
-use Spiral\RoadRunner\Console\Repository\RepositoryInterface;
-use Spiral\RoadRunner\Console\Tests\Unit\Stub\InMemoryRepository;
-use Spiral\RoadRunner\Console\Tests\Unit\Stub\Releases;
+use Spiral\RoadRunner\Console\Internal\GitHub\ReleasesClient;
 use Spiral\RoadRunner\Console\VersionsCommand;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Testo\Assert;
 use Testo\Test;
 
@@ -31,9 +30,9 @@ final class VersionsCommandTest
 
         $display = self::run(
             ['--os' => 'linux', '--arch' => 'amd64'],
-            Releases::release("v$major.1.0", ["roadrunner-$major.1.0-linux-amd64.tar.gz"]),
-            Releases::release("v$major.2.0", ["roadrunner-$major.2.0-linux-amd64.tar.gz", "roadrunner-$major.2.0-darwin-arm64.tar.gz"]),
-            Releases::release("v$major.3.0"),
+            ["v$major.1.0" => ["roadrunner-$major.1.0-linux-amd64.tar.gz"]],
+            ["v$major.2.0" => ["roadrunner-$major.2.0-linux-amd64.tar.gz", "roadrunner-$major.2.0-darwin-arm64.tar.gz"]],
+            ["v$major.3.0" => []],
         );
 
         Assert::string($display)
@@ -47,8 +46,8 @@ final class VersionsCommandTest
 
         $display = self::run(
             ['--os' => 'darwin', '--arch' => 'amd64'],
-            Releases::release("v$major.1.0", ["roadrunner-$major.1.0-linux-amd64.tar.gz"]),
-            Releases::release("v$major.2.0", ["roadrunner-$major.2.0-darwin-arm64.tar.gz"]),
+            ["v$major.1.0" => ["roadrunner-$major.1.0-linux-amd64.tar.gz"]],
+            ["v$major.2.0" => ["roadrunner-$major.2.0-darwin-arm64.tar.gz"]],
         );
 
         Assert::string($display)
@@ -60,7 +59,7 @@ final class VersionsCommandTest
     {
         $display = self::run(
             ['--os' => 'linux', '--arch' => 'amd64'],
-            Releases::release('v1.9.0', ['roadrunner-1.9.0-linux-amd64.tar.gz']),
+            ['v1.9.0' => ['roadrunner-1.9.0-linux-amd64.tar.gz']],
         );
 
         Assert::string($display)->contains('(reason: incompatible version)');
@@ -70,15 +69,30 @@ final class VersionsCommandTest
     {
         $display = self::run(
             ['--os' => 'linux', '--arch' => 'amd64', '--stability' => 'beta', '--filter' => '^2024.1'],
-            Releases::release('v2024.1.0-beta.1', ['roadrunner-2024.1.0-beta.1-linux-amd64.tar.gz']),
-            Releases::release('v2024.1.0-alpha.1', ['roadrunner-2024.1.0-alpha.1-linux-amd64.tar.gz']),
-            Releases::release('v2023.3.12', ['roadrunner-2023.3.12-linux-amd64.tar.gz']),
+            ['v2024.1.0-beta.1' => ['roadrunner-2024.1.0-beta.1-linux-amd64.tar.gz']],
+            ['v2024.1.0-alpha.1' => ['roadrunner-2024.1.0-alpha.1-linux-amd64.tar.gz']],
+            ['v2023.3.12' => ['roadrunner-2023.3.12-linux-amd64.tar.gz']],
         );
 
         Assert::string($display)
             ->contains('2024.1.0-beta1')
             ->notContains('alpha1')
             ->notContains('2023.3.12');
+    }
+
+    public function acceptsAlternativeConstraints(): void
+    {
+        $display = self::run(
+            ['--os' => 'linux', '--arch' => 'amd64', '--filter' => '^2023.3 || ~2024.1.0'],
+            ['v2024.1.0' => ['roadrunner-2024.1.0-linux-amd64.tar.gz']],
+            ['v2023.3.12' => ['roadrunner-2023.3.12-linux-amd64.tar.gz']],
+            ['v2024.2.0' => ['roadrunner-2024.2.0-linux-amd64.tar.gz']],
+        );
+
+        Assert::string($display)
+            ->contains('2024.1.0')
+            ->contains('2023.3.12')
+            ->notContains('2024.2.0');
     }
 
     /**
@@ -91,24 +105,23 @@ final class VersionsCommandTest
 
     /**
      * @param array<string, mixed> $input
+     * @param array<string, list<string>> ...$releases Asset names by release tag.
      */
-    private static function run(array $input, ReleaseInterface ...$releases): string
+    private static function run(array $input, array ...$releases): string
     {
-        $repository = new InMemoryRepository(...$releases);
-        $command = new class($repository) extends VersionsCommand {
-            public function __construct(
-                private readonly RepositoryInterface $repository,
-            ) {
-                parent::__construct();
+        $body = [];
+        foreach ($releases as $release) {
+            foreach ($release as $tag => $assets) {
+                $body[] = [
+                    'tag_name' => $tag,
+                    'name' => $tag,
+                    'assets' => \array_map(static fn(string $name): array => ['name' => $name], $assets),
+                ];
             }
+        }
 
-            protected function getRepository(): RepositoryInterface
-            {
-                return $this->repository;
-            }
-        };
-
-        $tester = new CommandTester($command);
+        $client = new ReleasesClient(new MockHttpClient(new MockResponse(\json_encode($body))));
+        $tester = new CommandTester(new VersionsCommand(releases: $client));
         Assert::same($tester->execute($input, ['interactive' => false]), 0);
 
         return $tester->getDisplay();

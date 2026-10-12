@@ -17,20 +17,25 @@ use Spiral\RoadRunner\Console\Command\StabilityOption;
 use Spiral\RoadRunner\Console\Command\VersionFilterOption;
 use Spiral\RoadRunner\Console\Environment\RoadRunnerVersion;
 use Spiral\RoadRunner\Console\Environment\Stability;
-use Spiral\RoadRunner\Console\Repository\ReleaseInterface;
+use Spiral\RoadRunner\Console\Internal\GitHub\Release;
+use Spiral\RoadRunner\Console\Internal\GitHub\ReleasesClient;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\StyleInterface;
 
-class VersionsCommand extends Command
+final class VersionsCommand extends Command
 {
     private OperatingSystemOption $os;
     private ArchitectureOption $arch;
     private VersionFilterOption $version;
     private StabilityOption $stability;
 
-    public function __construct(?string $name = null)
-    {
+    /**
+     * @param ReleasesClient|null $releases Configured from the environment on every run by default.
+     */
+    public function __construct(
+        ?string $name = null,
+        private readonly ?ReleasesClient $releases = null,
+    ) {
         parent::__construct($name ?? 'versions');
 
         $this->os = new OperatingSystemOption($this);
@@ -57,110 +62,77 @@ class VersionsCommand extends Command
     {
         $io = $this->io($input, $output);
 
+        $filter = $this->version->get($input, $io);
+        $constraint = \trim($filter);
+        $stability = $this->stability->get($input, $io);
+        $os = $this->os->get($input, $io);
+        $arch = $this->arch->get($input, $io);
+
         $output->writeln('');
         $output->writeln(' Environment:');
-        $output->writeln(\sprintf('   - Version:          <info>%s</info>', $this->version->get($input, $io)));
-        $output->writeln(\sprintf('   - Stability:        <info>%s</info>', $this->stability->get($input, $io)));
+        $output->writeln(\sprintf('   - Version:          <info>%s</info>', $filter));
+        $output->writeln(\sprintf('   - Stability:        <info>%s</info>', $stability));
         $output->writeln('');
 
+        $minimumStability = Stability::toInt($stability);
+        $releases = \array_filter(
+            ($this->releases ?? ReleasesClient::fromEnvironment())->releases(),
+            static fn(Release $release): bool => $release->assets !== []
+                && Stability::toInt($release->stability) >= $minimumStability
+                && ($constraint === '' || $release->satisfies($constraint)),
+        );
+        \usort($releases, Release::newestFirst(...));
+
         $rows = [];
-
-        $versions = $this->getRepository()
-            ->getReleases()
-            ->sortByVersion()
-            ->minimumStability($this->stability->get($input, $io))
-            ->filter(static fn(ReleaseInterface $release): bool => \count($release->getAssets()) > 0)
-            ->satisfies($this->version->get($input, $io))
-        ;
-
-        foreach ($versions as $version) {
+        foreach ($releases as $release) {
             $rows[] = [
-                $this->versionToString($version),
-                $this->stabilityToString($version),
-                $this->assetsToString($version),
-                $this->compatibilityToString($version, $input, $io),
+                $release->name,
+                self::stabilityToString($release->stability),
+                \sprintf('<fg=green> ✓ </> (<comment>%d</comment>)', \count($release->assets)),
+                self::compatibilityToString($release, $os, $arch),
             ];
         }
 
         $io->table(['Release', 'Stability', 'Binaries', 'Compatibility'], $rows);
 
-        return 0;
+        return self::SUCCESS;
     }
 
-    private function compatibilityToString(ReleaseInterface $release, InputInterface $input, StyleInterface $io): string
+    private static function compatibilityToString(Release $release, string $os, string $arch): string
     {
         $template = '<fg=red> ✖ </> (reason: <comment>%s</comment>)';
 
-        // Validate version
         if (! $release->satisfies(RoadRunnerVersion::constraint())) {
             return \sprintf($template, 'incompatible version');
         }
 
-        // Validate assets
-        $assets = $release->getAssets();
-
-        if ($assets->empty()) {
-            return \sprintf($template, 'no binaries');
-        }
-
-        // Validate OS
-        $assets = $assets->whereOperatingSystem(
-            $os = $this->os->get($input, $io),
+        $assets = \array_filter(
+            $release->assets,
+            static fn(string $asset): bool => \str_contains($asset, '-' . \strtolower($os) . '-'),
         );
-
-        if ($assets->empty()) {
+        if ($assets === []) {
             return \sprintf($template, 'no assembly for ' . $os);
         }
 
-        // Validate architecture
-        $assets = $assets->whereArchitecture(
-            $arch = $this->arch->get($input, $io),
+        $assets = \array_filter(
+            $assets,
+            static fn(string $asset): bool => \str_contains($asset, '-' . \strtolower($arch) . '.'),
         );
-
-        if ($assets->empty()) {
+        if ($assets === []) {
             return \sprintf($template, 'no assembly for ' . $arch);
         }
 
         return '<fg=green> ✓ </>';
     }
 
-    private function versionToString(ReleaseInterface $release): string
+    private static function stabilityToString(string $stability): string
     {
-        return $release->getName();
-    }
-
-    private function stabilityToString(ReleaseInterface $release): string
-    {
-        $stability = $release->getStability();
-
-        switch ($stability) {
-            case Stability::STABILITY_STABLE:
-                return "<fg=green> $stability </>";
-
-            case Stability::STABILITY_RC:
-                return "<fg=blue> $stability </>";
-
-            case Stability::STABILITY_BETA:
-                return "<fg=yellow> $stability </>";
-
-            case Stability::STABILITY_ALPHA:
-                return "<fg=red> $stability </>";
-
-            default:
-                return "<bg=red;bg=white> $stability </>";
-        }
-    }
-
-    private function assetsToString(ReleaseInterface $release): string
-    {
-        $count = $release->getAssets()
-            ->count()
-        ;
-
-        if ($count > 0) {
-            return \sprintf('<fg=green> ✓ </> (<comment>%d</comment>)', $count);
-        }
-
-        return '<fg=red> ✖ </>';
+        return match ($stability) {
+            Stability::STABILITY_STABLE => "<fg=green> $stability </>",
+            Stability::STABILITY_RC => "<fg=blue> $stability </>",
+            Stability::STABILITY_BETA => "<fg=yellow> $stability </>",
+            Stability::STABILITY_ALPHA => "<fg=red> $stability </>",
+            default => "<bg=red;bg=white> $stability </>",
+        };
     }
 }
