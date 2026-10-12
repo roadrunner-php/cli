@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console;
 
-use Spiral\RoadRunner\Console\Command\InstallationLocationOption;
-use Spiral\RoadRunner\Console\Configuration\Generator;
-use Spiral\RoadRunner\Console\Configuration\Plugins;
+use Spiral\RoadRunner\Console\Internal\Configuration\Generator;
+use Spiral\RoadRunner\Console\Internal\Configuration\Plugins;
+use Spiral\RoadRunner\Console\Internal\Option\InstallationLocationOption;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
-class MakeConfigCommand extends Command
+final class MakeConfigCommand extends Command
 {
     private InstallationLocationOption $location;
 
@@ -28,7 +30,7 @@ class MakeConfigCommand extends Command
     #[\Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io = $this->io($input, $output);
+        $io = new SymfonyStyle($input, $output);
 
 
         $target = $this->location->get($input, $io) . '/.rr.yaml';
