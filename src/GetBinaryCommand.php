@@ -148,16 +148,16 @@ final class GetBinaryCommand extends Command
     /**
      * @throws \Throwable
      */
-    private function installConfig(string $to, InputInterface $in, StyleInterface $io): bool
+    private function installConfig(string $to, InputInterface $in, StyleInterface $io): void
     {
         $to .= '/.rr.yaml';
 
         if (\is_file($to) || \is_file((string) \getcwd() . '/.rr.yaml')) {
-            return false;
+            return;
         }
 
         if ($in->getOption('no-config') || ! $io->confirm('Do you want create default ".rr.yaml" configuration file?', true)) {
-            return false;
+            return;
         }
 
         $generator = new Generator();
@@ -171,12 +171,11 @@ final class GetBinaryCommand extends Command
             $config = $generator->generate($plugins);
         } catch (\Throwable $e) {
             $io->error($e->getMessage());
+
+            return;
         }
 
-        /** @psalm-suppress PossiblyUndefinedVariable https://github.com/roadrunner-php/cli/issues/62 */
         \file_put_contents($to, $config);
-
-        return true;
     }
 
     private function checkExisting(string $binary, StyleInterface $io): bool
