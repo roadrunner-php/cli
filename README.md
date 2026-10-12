@@ -75,7 +75,7 @@ See the [RoadRunner documentation](https://docs.roadrunner.dev) for the configur
 
 ### Common options
 
-The binary commands accept `--filter` (`-f`, version constraint; for `get-binary` and `download-protoc-binary` `*` means any 3.x release, use `2025.*` for the calendar releases), `--stability` (`-s`), `--os` (`-o`), `--arch` (`-a`) and `--location` (`-l`, target directory) options. `get-binary` and `download-protoc-binary` download the binaries with [DLoad](https://github.com/php-internal/dload); a project's `dload.xml` does not affect them.
+The binary commands accept `--filter` (`-f`, version constraint; for `get-binary` and `download-protoc-binary` a filter without an upper bound stays on 3.x and later semver lines, `*` included, so the calendar releases have to be named explicitly, e.g. `2025.*` or `>=2025`), `--stability` (`-s`), `--os` (`-o`), `--arch` (`-a`) and `--location` (`-l`, target directory) options. `get-binary` and `download-protoc-binary` download the binaries with [DLoad](https://github.com/php-internal/dload); a project's `dload.xml` does not affect them.
 
 Releases are fetched from the GitHub API at `RR_GITHUB_API_URL`, `https://api.github.com` by default. For `get-binary` and `download-protoc-binary` it is either `https://api.github.com` or a GitHub Enterprise Server API URL ending with `/api/v3` (e.g. `https://ghe.example.com/api/v3`); `versions` also accepts a mirror.
 

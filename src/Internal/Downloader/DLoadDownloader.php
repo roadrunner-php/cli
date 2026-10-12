@@ -38,10 +38,15 @@ final class DLoadDownloader
     private const PUBLIC_API_URL = 'https://api.github.com';
 
     /**
-     * What `*` stands for. RoadRunner went from calendar versions back to 3.x, and DLoad orders versions
-     * numerically, so without a bound `2025.1.x` would win over every 3.x release; 2025 is `2025.*`.
+     * RoadRunner went from calendar versions back to 3.x, and DLoad orders versions numerically,
+     * so without this bound `2025.1.x` would win over every 3.x release.
      */
-    private const ANY_VERSION = '^3.0';
+    private const CALENDAR_BOUND = '<2000';
+
+    /**
+     * What `*` stands for: 3.x and the later semver lines.
+     */
+    private const ANY_VERSION = '>=3.0 ' . self::CALENDAR_BOUND;
 
     /**
      * DLoad serves the API of a GitHub Enterprise Server at `scheme://host[:port]/api/v3`, so no other path can be mapped.
@@ -86,7 +91,7 @@ final class DLoadDownloader
 
     /**
      * @param non-empty-string $software DLoad software alias, e.g. "rr" or "protoc-gen-php-grpc".
-     * @param string $constraint Composer version constraint; "*" or empty means any 3.x version.
+     * @param string $constraint Composer version constraint; "*" or empty means 3.x or a later semver line.
      * @param string $stability Minimum stability, e.g. "stable" or "beta".
      * @param bool $force Overwrite the binary if it already exists in the location.
      *
@@ -138,7 +143,23 @@ final class DLoadDownloader
             $version = self::ANY_VERSION;
         }
 
+        // DLoad has no parentheses, so the bound goes into each alternative
+        $alternatives = \preg_split('/\s*\|\|?\s*/', $version) ?: [$version];
+        $version = \implode(' || ', \array_map(self::boundAlternative(...), $alternatives));
+
         return ':' . $version . '@' . ($explicitStability ?? $stability);
+    }
+
+    /**
+     * An alternative without an upper bound gets {@see self::CALENDAR_BOUND}, unless its lower bound is a calendar version.
+     */
+    private static function boundAlternative(string $alternative): string
+    {
+        $bounded = \preg_match('/<(?!>)|[\^~]|\d\.[*x]|\s-\s/i', $alternative) === 1
+            || \preg_match('/^(?:==?)?\s*v?\d[^\s,]*$/i', $alternative) === 1;
+        $calendar = \preg_match('/(?<!<)>=?\s*v?(\d+)/', $alternative, $lower) === 1 && (int) $lower[1] >= 2000;
+
+        return $bounded || $calendar ? $alternative : $alternative . ' ' . self::CALENDAR_BOUND;
     }
 
     /**
