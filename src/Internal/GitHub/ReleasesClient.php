@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Internal\GitHub;
 
-use Spiral\RoadRunner\Console\Environment\Environment;
+use Spiral\RoadRunner\Console\Internal\Environment\Environment;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;

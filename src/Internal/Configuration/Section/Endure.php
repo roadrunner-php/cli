@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Spiral\RoadRunner\Console\Internal\Configuration\Section;
+
+/**
+ * @internal
+ */
+final class Endure extends AbstractSection
+{
+    private const NAME = 'endure';
+
+    #[\Override]
+    public static function getShortName(): string
+    {
+        return self::NAME;
+    }
+
+    #[\Override]
+    public function render(): array
+    {
+        return [
+            self::NAME => [
+                'grace_period' => '30s',
+                'print_graph' => false,
+                'log_level' => 'error',
+            ],
+        ];
+    }
+}

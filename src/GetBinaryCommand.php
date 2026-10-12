@@ -11,21 +11,23 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console;
 
-use Spiral\RoadRunner\Console\Command\ArchitectureOption;
-use Spiral\RoadRunner\Console\Command\InstallationLocationOption;
-use Spiral\RoadRunner\Console\Command\OperatingSystemOption;
-use Spiral\RoadRunner\Console\Command\StabilityOption;
-use Spiral\RoadRunner\Console\Command\VersionFilterOption;
-use Spiral\RoadRunner\Console\Configuration\Generator;
-use Spiral\RoadRunner\Console\Configuration\Plugins;
-use Spiral\RoadRunner\Console\Downloader\DLoadDownloader;
 use Spiral\RoadRunner\Console\Environment\OperatingSystem;
+use Spiral\RoadRunner\Console\Internal\Configuration\Generator;
+use Spiral\RoadRunner\Console\Internal\Configuration\Plugins;
+use Spiral\RoadRunner\Console\Internal\Downloader\DLoadDownloader;
+use Spiral\RoadRunner\Console\Internal\Option\ArchitectureOption;
+use Spiral\RoadRunner\Console\Internal\Option\InstallationLocationOption;
+use Spiral\RoadRunner\Console\Internal\Option\OperatingSystemOption;
+use Spiral\RoadRunner\Console\Internal\Option\StabilityOption;
+use Spiral\RoadRunner\Console\Internal\Option\VersionFilterOption;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\StyleInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
-class GetBinaryCommand extends Command
+final class GetBinaryCommand extends Command
 {
     private OperatingSystemOption $os;
     private ArchitectureOption $arch;
@@ -59,7 +61,7 @@ class GetBinaryCommand extends Command
     #[\Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io = $this->io($input, $output);
+        $io = new SymfonyStyle($input, $output);
 
         $target = $this->location->get($input, $io);
         $os = $this->os->get($input, $io);

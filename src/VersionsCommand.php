@@ -11,16 +11,18 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console;
 
-use Spiral\RoadRunner\Console\Command\ArchitectureOption;
-use Spiral\RoadRunner\Console\Command\OperatingSystemOption;
-use Spiral\RoadRunner\Console\Command\StabilityOption;
-use Spiral\RoadRunner\Console\Command\VersionFilterOption;
-use Spiral\RoadRunner\Console\Environment\RoadRunnerVersion;
-use Spiral\RoadRunner\Console\Environment\Stability;
+use Spiral\RoadRunner\Console\Internal\Environment\RoadRunnerVersion;
+use Spiral\RoadRunner\Console\Internal\Environment\Stability;
 use Spiral\RoadRunner\Console\Internal\GitHub\Release;
 use Spiral\RoadRunner\Console\Internal\GitHub\ReleasesClient;
+use Spiral\RoadRunner\Console\Internal\Option\ArchitectureOption;
+use Spiral\RoadRunner\Console\Internal\Option\OperatingSystemOption;
+use Spiral\RoadRunner\Console\Internal\Option\StabilityOption;
+use Spiral\RoadRunner\Console\Internal\Option\VersionFilterOption;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 final class VersionsCommand extends Command
 {
@@ -42,13 +44,7 @@ final class VersionsCommand extends Command
         $this->arch = new ArchitectureOption($this);
         $this->stability = new StabilityOption($this);
 
-        $this->version = new class($this) extends VersionFilterOption {
-            #[\Override]
-            protected function default(): string
-            {
-                return '*';
-            }
-        };
+        $this->version = new VersionFilterOption($this, default: '*');
     }
 
     #[\Override]
@@ -60,7 +56,7 @@ final class VersionsCommand extends Command
     #[\Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io = $this->io($input, $output);
+        $io = new SymfonyStyle($input, $output);
 
         $filter = $this->version->get($input, $io);
         $constraint = \trim($filter);

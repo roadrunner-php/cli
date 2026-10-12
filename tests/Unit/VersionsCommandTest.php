@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console\Tests\Unit;
 
-use Spiral\RoadRunner\Console\Environment\RoadRunnerVersion;
+use Spiral\RoadRunner\Console\Internal\Environment\RoadRunnerVersion;
 use Spiral\RoadRunner\Console\Internal\GitHub\ReleasesClient;
 use Spiral\RoadRunner\Console\VersionsCommand;
 use Symfony\Component\Console\Tester\CommandTester;
