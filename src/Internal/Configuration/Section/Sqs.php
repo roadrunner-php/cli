@@ -22,12 +22,18 @@ final class Sqs extends AbstractSection
     {
         return [
             self::NAME => [
-                'key' => 'api-key',
+                'key' => 'access-key',
                 'secret' => 'api-secret',
                 'region' => 'us-west-1',
-                'session_token' => 'test',
-                'endpoint' => 'http://127.0.0.1:9324',
             ],
+        ];
+    }
+
+    #[\Override]
+    public function getRequired(): array
+    {
+        return [
+            Jobs::class,
         ];
     }
 }

@@ -22,7 +22,7 @@ final class Boltdb extends AbstractSection
     {
         return [
             self::NAME => [
-                'permissions' => 0777,
+                'file' => 'rr.db',
             ],
         ];
     }

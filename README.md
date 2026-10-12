@@ -62,8 +62,9 @@ See the [RoadRunner documentation](https://docs.roadrunner.dev) for the configur
   `plugin` and `preset` options, a configuration with the default plugins (`rpc`, `server`, `http`, `jobs`, `kv`, `metrics`) is created.
   Using the `plugin` option (shortcut `p`) can create an example configuration file with only plugins needed.
   For example, with http plugin only: `get-binary -p http`, http and jobs: `get-binary -p http -p jobs`.
-  Available plugins: `amqp`, `beanstalk`, `boltdb`, `broadcast`, `endure`, `fileserver`, `grpc`, `http`, `jobs`, `kv`,
-  `logs`, `metrics`, `nats`, `otel`, `redis`, `reload`, `rpc`, `server`, `service`, `sqs`, `status`, `tcp`, `temporal`, `websockets`.
+  Available plugins: `amqp`, `beanstalk`, `boltdb`, `centrifuge`, `endure`, `fileserver`, `google_pub_sub`, `grpc`,
+  `http`, `jobs`, `kafka`, `kv`, `logs`, `metrics`, `nats`, `nsq`, `otel`, `protoreg`, `redis`, `rpc`, `server`,
+  `service`, `sqs`, `status`, `temporal`.
   Using the `preset` option can create an example configuration file with popular plugins for different typical tasks.
   For example, with web preset: `get-binary --preset web`.
   Available presets: `web` (contains plugins `http`, `jobs`).

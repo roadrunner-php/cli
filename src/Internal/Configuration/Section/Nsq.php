@@ -7,9 +7,9 @@ namespace Spiral\RoadRunner\Console\Internal\Configuration\Section;
 /**
  * @internal
  */
-final class Websockets extends AbstractSection
+final class Nsq extends AbstractSection
 {
-    private const NAME = 'websockets';
+    private const NAME = 'nsq';
 
     #[\Override]
     public static function getShortName(): string
@@ -22,10 +22,16 @@ final class Websockets extends AbstractSection
     {
         return [
             self::NAME => [
-                'broker' => 'default-redis',
-                'allowed_origin' => '*',
-                'path' => '/ws',
+                'addr' => 'tcp://127.0.0.1:4150',
             ],
+        ];
+    }
+
+    #[\Override]
+    public function getRequired(): array
+    {
+        return [
+            Jobs::class,
         ];
     }
 }

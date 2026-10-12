@@ -24,9 +24,20 @@ final class Jobs extends AbstractSection
             self::NAME => [
                 'pool' => [
                     'num_workers' => 2,
-                    'max_worker_memory' => 100,
+                    'supervisor' => [
+                        'max_worker_memory' => 100,
+                    ],
                 ],
-                'consume' => [],
+                'consume' => ['local'],
+                'pipelines' => [
+                    'local' => [
+                        'driver' => 'memory',
+                        'config' => [
+                            'priority' => 10,
+                            'prefetch' => 10,
+                        ],
+                    ],
+                ],
             ],
         ];
     }

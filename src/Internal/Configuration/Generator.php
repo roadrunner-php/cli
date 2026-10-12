@@ -27,7 +27,7 @@ final class Generator
     {
         $this->collectSections($plugins->getPlugins());
 
-        return Yaml::dump($this->getContent(), 10);
+        return Yaml::dump($this->getContent(), 10, 4, Yaml::DUMP_OBJECT_AS_MAP);
     }
 
     private function getContent(): array

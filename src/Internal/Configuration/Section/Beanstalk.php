@@ -23,8 +23,15 @@ final class Beanstalk extends AbstractSection
         return [
             self::NAME => [
                 'addr' => 'tcp://127.0.0.1:11300',
-                'timeout' => '10s',
             ],
+        ];
+    }
+
+    #[\Override]
+    public function getRequired(): array
+    {
+        return [
+            Jobs::class,
         ];
     }
 }
