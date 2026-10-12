@@ -19,6 +19,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * protoc-gen-php-grpc file download command.
+ *
+ * @psalm-api
  */
 final class DownloadProtocBinaryCommand extends Command
 {

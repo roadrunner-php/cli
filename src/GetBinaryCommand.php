@@ -27,6 +27,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\StyleInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+/**
+ * @psalm-api
+ */
 final class GetBinaryCommand extends Command
 {
     private OperatingSystemOption $os;
