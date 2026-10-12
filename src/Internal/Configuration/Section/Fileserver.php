@@ -24,26 +24,12 @@ final class Fileserver extends AbstractSection
             self::NAME => [
                 'address' => '127.0.0.1:10101',
                 'calculate_etag' => true,
-                'weak' => false,
-                'stream_request_body' => true,
-                //                'serve' => [
-                //                    [
-                //                        'prefix' => '/foo',
-                //                        'root' => '../../../tests',
-                //                        'compress' => false,
-                //                        'cache_duration' => 10,
-                //                        'max_age' => 10,
-                //                        'bytes_range' => true
-                //                    ],
-                //                    [
-                //                        'prefix' => '/foo/bar',
-                //                        'root' => '../../../tests',
-                //                        'compress' => false,
-                //                        'cache_duration' => 10,
-                //                        'max_age' => 10,
-                //                        'bytes_range' => true
-                //                    ]
-                //                ]
+                'serve' => [
+                    [
+                        'prefix' => '/',
+                        'root' => 'public',
+                    ],
+                ],
             ],
         ];
     }

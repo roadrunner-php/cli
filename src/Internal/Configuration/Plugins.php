@@ -7,29 +7,30 @@ namespace Spiral\RoadRunner\Console\Internal\Configuration;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Amqp;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Beanstalk;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Boltdb;
-use Spiral\RoadRunner\Console\Internal\Configuration\Section\Broadcast;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Centrifuge;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Endure;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Fileserver;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\GooglePubSub;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Grpc;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Http;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Jobs;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Kafka;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Kv;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Logs;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Metrics;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Nats;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Nsq;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Otel;
+use Spiral\RoadRunner\Console\Internal\Configuration\Section\Protoreg;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Redis;
-use Spiral\RoadRunner\Console\Internal\Configuration\Section\Reload;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Rpc;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\SectionInterface;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Server;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Service;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Sqs;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Status;
-use Spiral\RoadRunner\Console\Internal\Configuration\Section\Tcp;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Temporal;
 use Spiral\RoadRunner\Console\Internal\Configuration\Section\Version;
-use Spiral\RoadRunner\Console\Internal\Configuration\Section\Websockets;
 
 /**
  * @internal
@@ -45,28 +46,29 @@ final class Plugins
         Amqp::class,
         Beanstalk::class,
         Boltdb::class,
-        Broadcast::class,
+        Centrifuge::class,
         Endure::class,
         Fileserver::class,
+        GooglePubSub::class,
         Grpc::class,
         Http::class,
         Jobs::class,
+        Kafka::class,
         Kv::class,
         Logs::class,
         Metrics::class,
         Nats::class,
+        Nsq::class,
         Otel::class,
+        Protoreg::class,
         Redis::class,
-        Reload::class,
         Rpc::class,
         Server::class,
         Service::class,
         Sqs::class,
         Status::class,
-        Tcp::class,
         Temporal::class,
         Version::class,
-        Websockets::class,
     ];
 
     /**

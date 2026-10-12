@@ -29,4 +29,12 @@ final class Amqp extends AbstractSection
             ],
         ];
     }
+
+    #[\Override]
+    public function getRequired(): array
+    {
+        return [
+            Jobs::class,
+        ];
+    }
 }

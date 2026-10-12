@@ -24,18 +24,8 @@ final class Kv extends AbstractSection
             self::NAME => [
                 'local' => [
                     'driver' => 'memory',
-                    'config' => [
-                        'interval' => 60,
-                    ],
+                    'config' => new \stdClass(),
                 ],
-                //                'redis' => [
-                //                    'driver' => 'redis',
-                //                    'config' => [
-                //                        'addrs' => [
-                //                            'localhost:6379'
-                //                        ]
-                //                    ]
-                //                ]
             ],
         ];
     }

@@ -22,9 +22,7 @@ final class Status extends AbstractSection
     {
         return [
             self::NAME => [
-                'address' => '127.0.0.1:2114',
-                'unavailable_status_code' => 503,
-            ],
+                'address' => '127.0.0.1:2114',            ],
         ];
     }
 }

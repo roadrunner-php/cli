@@ -25,12 +25,41 @@ final class GeneratorTest
     #[DataSet(['http'])]
     #[DataSet(['jobs'])]
     #[DataSet(['grpc'])]
-    #[DataSet(['tcp'])]
+    #[DataSet(['temporal'])]
+    #[DataSet(['centrifuge'])]
     public function addsServerForWorkerPlugins(string $plugin): void
     {
         $config = Yaml::parse((new Generator())->generate(Plugins::fromPlugins([$plugin])));
 
         Assert::same(\array_keys($config), ['version', 'rpc', $plugin, 'server']);
+    }
+
+    #[DataSet(['amqp'])]
+    #[DataSet(['beanstalk'])]
+    #[DataSet(['google_pub_sub'])]
+    #[DataSet(['kafka'])]
+    #[DataSet(['nats'])]
+    #[DataSet(['nsq'])]
+    #[DataSet(['sqs'])]
+    public function addsJobsForBrokerPlugins(string $plugin): void
+    {
+        $config = Yaml::parse((new Generator())->generate(Plugins::fromPlugins([$plugin])));
+
+        Assert::same(\array_keys($config), ['version', 'rpc', $plugin, 'jobs', 'server']);
+    }
+
+    public function addsGrpcForProtoreg(): void
+    {
+        $config = Yaml::parse((new Generator())->generate(Plugins::fromPlugins(['protoreg'])));
+
+        Assert::same(\array_keys($config), ['version', 'rpc', 'protoreg', 'grpc', 'server']);
+    }
+
+    public function rendersKvMemoryConfigAsMap(): void
+    {
+        $yaml = (new Generator())->generate(Plugins::fromPlugins(['kv']));
+
+        Assert::string($yaml)->matchesRegex('/^\s+config: \{\s*\}$/m');
     }
 
     public function rendersEachSectionOnce(): void

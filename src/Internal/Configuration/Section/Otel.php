@@ -22,13 +22,13 @@ final class Otel extends AbstractSection
     {
         return [
             self::NAME => [
-                'insecure' => false,
-                'compress' => false,
-                'client' => 'http',
+                'resource' => [
+                    'service_name' => 'RoadRunner',
+                    'service_version' => '1.0.0',
+                ],
+                'insecure' => true,
                 'exporter' => 'otlp',
-                'custom_url' => '',
-                'service_name' => 'RoadRunner',
-                'service_version' => '1.0.0',
+                'client' => 'http',
                 'endpoint' => '127.0.0.1:4318',
             ],
         ];

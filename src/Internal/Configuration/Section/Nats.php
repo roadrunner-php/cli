@@ -22,8 +22,16 @@ final class Nats extends AbstractSection
     {
         return [
             self::NAME => [
-                'addr' => 'demo.nats.io',
+                'addr' => 'nats://127.0.0.1:4222',
             ],
+        ];
+    }
+
+    #[\Override]
+    public function getRequired(): array
+    {
+        return [
+            Jobs::class,
         ];
     }
 }
