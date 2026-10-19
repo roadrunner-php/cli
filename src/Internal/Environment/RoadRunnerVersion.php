@@ -18,27 +18,37 @@ use Composer\InstalledVersions;
  */
 final class RoadRunnerVersion
 {
-    private const PACKAGE_NAME = 'spiral/roadrunner';
+    /**
+     * The metapackage was renamed without `replace`, so older installations still carry the old name.
+     */
+    private const PACKAGE_NAMES = ['roadrunner/roadrunner', 'spiral/roadrunner'];
 
     /**
-     * Used when the spiral/roadrunner metapackage is not installed.
+     * Used when the RoadRunner metapackage is not installed.
      */
     private const DEFAULT_CONSTRAINT = '3.*';
 
     /**
      * Returns the RoadRunner binary version constraint matching the installed
-     * spiral/roadrunner metapackage, e.g. "3.*" or "2025.*".
+     * RoadRunner metapackage, e.g. "3.*" or "2025.*".
      *
      * Not delegated to {@see \Spiral\RoadRunner\Version::constraint()}: without the metapackage
      * it falls back to the roadrunner/worker version, whose major is unrelated to the binary's.
      */
     public static function constraint(): string
     {
-        if (!InstalledVersions::isInstalled(self::PACKAGE_NAME)) {
-            return self::DEFAULT_CONSTRAINT;
+        foreach (self::PACKAGE_NAMES as $name) {
+            if (InstalledVersions::isInstalled($name)) {
+                return self::fromVersion((string) InstalledVersions::getPrettyVersion($name));
+            }
         }
 
-        $version = \ltrim((string) InstalledVersions::getPrettyVersion(self::PACKAGE_NAME), 'v');
+        return self::DEFAULT_CONSTRAINT;
+    }
+
+    private static function fromVersion(string $version): string
+    {
+        $version = \ltrim($version, 'v');
         [$major] = \explode('.', $version);
 
         return \str_contains($version, '.') && \is_numeric($major)
