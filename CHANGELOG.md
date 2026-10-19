@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/roadrunner-php/cli/compare/3.0.0...3.0.1) (2026-10-19)
+
+
+### Bug Fixes
+
+* detect the RoadRunner version from roadrunner/roadrunner ([9ebb646](https://github.com/roadrunner-php/cli/commit/9ebb646292f38769ab3317c642f1c110bb91e2e2))
+
 ## [3.0.0](https://github.com/roadrunner-php/cli/compare/v2.7.2...3.0.0) (2026-10-12)
 
 
