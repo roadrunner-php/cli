@@ -20,7 +20,7 @@
 
 <br />
 
-This package provides the `rr` console command for PHP projects that run on [RoadRunner](https://roadrunner.dev): it downloads the RoadRunner server binary and `protoc-gen-php-grpc` plugin built for your environment and generates a starter `.rr.yaml` configuration.
+This package provides the `rr` console command for PHP projects that run on [RoadRunner](https://roadrunner.dev): it downloads the RoadRunner server binary and the gRPC code generation tools (`buf`, `protoc`, `protoc-gen-php-grpc`) built for your environment and generates a starter `.rr.yaml` configuration.
 
 > [!NOTE]
 > Version 3.x of `roadrunner/cli` targets RoadRunner v3: `rr get` downloads RoadRunner 3 by default. For RoadRunner 2025.x, use [`spiral/roadrunner-cli`](https://packagist.org/packages/spiral/roadrunner-cli) 2.x.
@@ -54,6 +54,25 @@ Then start the server:
 
 See the [RoadRunner documentation](https://docs.roadrunner.dev) for the configuration reference.
 
+### gRPC tools
+
+Generating gRPC code with `buf generate` takes three binaries: [`buf`](https://buf.build), `protoc` (buf runs its built-in PHP generator) and `protoc-gen-php-grpc`. Download all of them into the project root:
+
+```bash
+vendor/bin/rr get-grpc-tools
+```
+
+```
+ google/protobuf v5.36.2 -> protoc ^36.0
+
+ Versions:
+   - buf:                 ^1
+   - protoc:              ^36.0
+   - protoc-gen-php-grpc: 3.*
+```
+
+The protoc version follows the protobuf runtime of the project, since the generated code is only guaranteed to work with the runtime of the same protoc major: the PHP runtime minor is the protoc major (`google/protobuf` 4.33.x takes protoc 33.x, 5.36.x takes 36.x; up to 3.20 both shared one version). The runtime is the `google/protobuf` package installed in the project in the working directory, or else `ext-protobuf`; without either, the latest protoc is installed. `--protoc`, `--buf` and `--plugin` (for `protoc-gen-php-grpc`) take a version constraint each, e.g. `--protoc=^33.0`.
+
 ## Commands
 
 - `get-binary` (or `get`) - allows to install the latest version of the RoadRunner compatible with
@@ -70,19 +89,23 @@ See the [RoadRunner documentation](https://docs.roadrunner.dev) for the configur
   Available presets: `web` (contains plugins `http`, `jobs`).
   Use `--no-config` to skip the configuration file.
 - `make-config` - creates the `.rr.yaml` configuration file without downloading the binary. Accepts the same `plugin` and `preset` options.
-- `download-protoc-binary` - allows to install the latest version of the `protoc-gen-php-grpc` file compatible with
-  your environment (operating system, processor architecture, runtime, etc...).
+- `get-grpc-tools` - installs `buf`, `protoc` and `protoc-gen-php-grpc`, the binaries `buf generate` needs to
+  generate gRPC code, see [gRPC tools](#grpc-tools). The versions default to buf 1.x, the protoc major the project's
+  protobuf runtime supports and `protoc-gen-php-grpc` of the RoadRunner line `get-binary` installs; `--buf`, `--protoc`
+  and `--plugin` override them. Binaries already in the location are kept unless the overwrite is confirmed.
+- `download-protoc-binary` - **deprecated**, use `get-grpc-tools`. Installs only the `protoc-gen-php-grpc` plugin,
+  not protoc itself.
 - `versions` - displays a list of available RoadRunner binary versions.
 
 ### Common options
 
-The binary commands accept `--filter` (`-f`, version constraint; for `get-binary` and `download-protoc-binary` `*` means `>=3.0 <2000` and any other `||` alternative without an upper bound gets `<2000`, so the calendar releases have to be named explicitly, e.g. `2025.*` or `>=2025`), `--stability` (`-s`), `--os` (`-o`), `--arch` (`-a`) and `--location` (`-l`, target directory) options. `get-binary` and `download-protoc-binary` download the binaries with [DLoad](https://github.com/php-internal/dload); a project's `dload.xml` does not affect them.
+The binary commands accept `--filter` (`-f`, version constraint; for `get-binary` and `download-protoc-binary` `*` means `>=3.0 <2000` and any other `||` alternative without an upper bound gets `<2000`, so the calendar releases have to be named explicitly, e.g. `2025.*` or `>=2025`; `get-grpc-tools` applies the same to `--plugin` and takes `--buf`/`--protoc` as they are), `--stability` (`-s`), `--os` (`-o`), `--arch` (`-a`) and `--location` (`-l`, target directory) options. `get-binary`, `get-grpc-tools` and `download-protoc-binary` download the binaries with [DLoad](https://github.com/php-internal/dload); a project's `dload.xml` does not affect them.
 
 On a musl host such as Alpine they install the musl build of Linux on their own, even with `--os=linux`; `--os=unknown-musl` forces the musl build from any host.
 
 DLoad comes with its own `vendor/bin/dload` and keeps a version registry in the user cache: `~/.cache/dload`, `$XDG_CACHE_HOME/dload` when that is set, `%LOCALAPPDATA%\dload\cache` on Windows. `DLOAD_CACHE_DIR` moves it, `DLOAD_CACHE_TTL=0` turns it off.
 
-Releases are fetched from the GitHub API at `RR_GITHUB_API_URL`, `https://api.github.com` by default. For `get-binary` and `download-protoc-binary` it is either `https://api.github.com` or a GitHub Enterprise Server API URL ending with `/api/v3` (e.g. `https://ghe.example.com/api/v3`); `versions` also accepts a mirror.
+Releases are fetched from the GitHub API at `RR_GITHUB_API_URL`, `https://api.github.com` by default. For `get-binary`, `get-grpc-tools` and `download-protoc-binary` it is either `https://api.github.com` or a GitHub Enterprise Server API URL ending with `/api/v3` (e.g. `https://ghe.example.com/api/v3`), which then has to serve `bufbuild/buf` and `protocolbuffers/protobuf` for `get-grpc-tools` too; `versions` also accepts a mirror.
 
 All commands pick the API token the same way, to avoid the rate limits:
 

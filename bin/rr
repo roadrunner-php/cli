@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 use Spiral\RoadRunner\Console\DownloadProtocBinaryCommand;
 use Spiral\RoadRunner\Console\GetBinaryCommand;
+use Spiral\RoadRunner\Console\GetGrpcToolsCommand;
 use Spiral\RoadRunner\Console\MakeConfigCommand;
 use Spiral\RoadRunner\Console\VersionsCommand;
 use Spiral\RoadRunner\Version;
@@ -72,12 +73,14 @@ if (\method_exists($app, 'addCommand')) {
     $app->addCommand(new GetBinaryCommand());
     $app->addCommand(new VersionsCommand());
     $app->addCommand(new DownloadProtocBinaryCommand());
+    $app->addCommand(new GetGrpcToolsCommand());
     $app->addCommand(new MakeConfigCommand());
 } else {
     // For Symfony 7.3 and lower
     $app->add(new GetBinaryCommand());
     $app->add(new VersionsCommand());
     $app->add(new DownloadProtocBinaryCommand());
+    $app->add(new GetGrpcToolsCommand());
     $app->add(new MakeConfigCommand());
 }
 

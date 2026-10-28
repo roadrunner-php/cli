@@ -26,7 +26,7 @@ final class VersionsTest
         Assert::same($result->exitCode, 0, (string) $result);
         Assert::same(self::releases($result->stdout), ['3.4.0', '3.2.0', '3.1.0', '2025.1.5', '2.12.3']);
         Assert::string($result->stdout)
-            ->matchesRegex('/^\s*3\.4\.0\s+stable\s+✓\s+\(7\)\s+✓\s*$/mu')
+            ->matchesRegex('/^\s*3\.4\.0\s+stable\s+✓\s+\(8\)\s+✓\s*$/mu')
             ->matchesRegex('/^\s*2025\.1\.5\s+stable\s+.*\(reason: incompatible version\)/mu');
         Assert::same(\count(FakeGitHub::releaseRequests()), 1);
     }

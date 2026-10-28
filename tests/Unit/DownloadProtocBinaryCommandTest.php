@@ -37,7 +37,7 @@ final class DownloadProtocBinaryCommandTest
         $command = new DownloadProtocBinaryCommand();
 
         Assert::same($command->getName(), 'download-protoc-binary');
-        Assert::same($command->getDescription(), 'Install or update protoc-gen-php-grpc binary');
+        Assert::same($command->getDescription(), 'Install or update protoc-gen-php-grpc binary (deprecated, use get-grpc-tools)');
     }
 
     public function definesEnvironmentOptions(): void

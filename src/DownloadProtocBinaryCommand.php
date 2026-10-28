@@ -46,7 +46,7 @@ final class DownloadProtocBinaryCommand extends Command
     #[\Override]
     public function getDescription(): string
     {
-        return 'Install or update protoc-gen-php-grpc binary';
+        return 'Install or update protoc-gen-php-grpc binary (deprecated, use get-grpc-tools)';
     }
 
     #[\Override]

@@ -1,0 +1,29 @@
+[
+    {
+        "tag_name": "v2.0.0",
+        "prerelease": false,
+        "assets": [
+            "buf-Linux-x86_64.tar.gz",
+            "buf-Windows-x86_64.zip"
+        ]
+    },
+    {
+        "tag_name": "v1.75.0",
+        "prerelease": false,
+        "assets": [
+            "buf-Darwin-arm64.tar.gz",
+            "buf-Linux-aarch64.tar.gz",
+            "buf-Linux-x86_64.tar.gz",
+            "buf-Windows-x86_64.zip",
+            "protoc-gen-buf-lint-Linux-x86_64"
+        ]
+    },
+    {
+        "tag_name": "v1.74.0",
+        "prerelease": false,
+        "assets": [
+            "buf-Linux-x86_64.tar.gz",
+            "buf-Windows-x86_64.zip"
+        ]
+    }
+]
