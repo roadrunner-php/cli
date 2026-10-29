@@ -52,6 +52,12 @@ final class GetBinaryCommandTest
         Assert::same($command->getDescription(), 'Install or update RoadRunner binary');
     }
 
+    public function keepsGetAliasUnderAnotherName(): void
+    {
+        Assert::same((new GetBinaryCommand('install'))->getAliases(), ['get']);
+        Assert::same((new GetBinaryCommand('get'))->getAliases(), []);
+    }
+
     public function keepsOptions(): void
     {
         Assert::array(\array_keys((new GetBinaryCommand())->getDefinition()->getOptions()))

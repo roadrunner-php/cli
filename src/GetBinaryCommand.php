@@ -45,7 +45,7 @@ final class GetBinaryCommand extends Command
         $this->downloader = $downloader ?? new DLoadDownloader();
         parent::__construct($name ?? 'get-binary');
         // Not left to Symfony's abbreviation lookup: `get` also abbreviates get-grpc-tools
-        $name === null and $this->setAliases(['get']);
+        $this->getName() === 'get' or $this->setAliases(['get']);
 
         $this->os = new OperatingSystemOption($this);
         $this->arch = new ArchitectureOption($this);
