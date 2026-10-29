@@ -52,6 +52,28 @@ final class GrpcToolsTest
         Assert::same(\trim($this->dir->read('protoc.exe')), 'fake protoc 33.6 win64');
         Assert::same(\trim($this->dir->read('buf.exe')), 'fake buf 1.75.0 Windows x86_64');
         Assert::same(\trim($this->dir->read('protoc-gen-php-grpc.exe')), 'fake rr 3.4.0 windows amd64');
+        Assert::same(FakeGitHub::downloads(), [
+            'buf-Windows-x86_64.zip',
+            'protoc-33.6-win64.zip',
+            'protoc-gen-php-grpc-3.4.0-windows-amd64.zip',
+        ]);
+    }
+
+    public function installsMacosBinaries(): void
+    {
+        $this->installProtobuf('5.36.2');
+
+        $result = $this->rr()->run(['get-grpc-tools', '--os=darwin', '--arch=arm64']);
+
+        Assert::same($result->exitCode, 0, (string) $result);
+        Assert::same(\trim($this->dir->read('buf')), 'fake buf 1.75.0 Darwin arm64');
+        Assert::same(\trim($this->dir->read('protoc')), 'fake protoc 36.2 osx-universal_binary');
+        Assert::same(\trim($this->dir->read('protoc-gen-php-grpc')), 'fake rr 3.4.0 darwin arm64');
+        Assert::same(FakeGitHub::downloads(), [
+            'buf-Darwin-arm64.tar.gz',
+            'protoc-36.2-osx-universal_binary.zip',
+            'protoc-gen-php-grpc-3.4.0-darwin-arm64.tar.gz',
+        ]);
     }
 
     public function installsLatestProtocWithoutRuntime(): void

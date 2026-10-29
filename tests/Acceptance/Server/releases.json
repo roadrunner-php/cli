@@ -23,6 +23,7 @@
         "tag_name": "v3.4.0",
         "prerelease": false,
         "assets": [
+            "protoc-gen-php-grpc-3.4.0-darwin-arm64.tar.gz",
             "protoc-gen-php-grpc-3.4.0-linux-amd64.tar.gz",
             "protoc-gen-php-grpc-3.4.0-linux-arm64.tar.gz",
             "protoc-gen-php-grpc-3.4.0-windows-amd64.zip",
