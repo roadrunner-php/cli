@@ -15,6 +15,7 @@ use Spiral\RoadRunner\Console\Environment\OperatingSystem;
 use Spiral\RoadRunner\Console\Internal\Downloader\DLoadDownloader;
 use Spiral\RoadRunner\Console\Internal\Environment\ProtobufRuntime;
 use Spiral\RoadRunner\Console\Internal\Environment\RoadRunnerVersion;
+use Spiral\RoadRunner\Console\Internal\Installation\ExistingBinary;
 use Spiral\RoadRunner\Console\Internal\Option\ArchitectureOption;
 use Spiral\RoadRunner\Console\Internal\Option\InstallationLocationOption;
 use Spiral\RoadRunner\Console\Internal\Option\OperatingSystemOption;
@@ -23,7 +24,6 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\StyleInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -101,7 +101,7 @@ final class GetGrpcToolsCommand extends Command
         $failed = [];
         foreach ($tools as $tool => $constraint) {
             $binary = $target . '/' . $tool . ($os === OperatingSystem::OS_WINDOWS ? '.exe' : '');
-            if (! $this->checkExisting($tool, $binary, $io)) {
+            if (! ExistingBinary::mayInstall($binary, $tool, $io)) {
                 continue;
             }
 
@@ -217,20 +217,5 @@ final class GetGrpcToolsCommand extends Command
         $io->newLine();
 
         return [$constraint, $runtime];
-    }
-
-    private function checkExisting(string $tool, string $binary, StyleInterface $io): bool
-    {
-        if (\is_file($binary)) {
-            $io->warning(\sprintf('%s binary file already exists!', $tool));
-
-            if (! $io->confirm('Do you want overwrite it?', false)) {
-                $io->note(\sprintf('Skipping %s installation...', $tool));
-
-                return false;
-            }
-        }
-
-        return true;
     }
 }

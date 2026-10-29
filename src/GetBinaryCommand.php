@@ -15,6 +15,7 @@ use Spiral\RoadRunner\Console\Environment\OperatingSystem;
 use Spiral\RoadRunner\Console\Internal\Configuration\Generator;
 use Spiral\RoadRunner\Console\Internal\Configuration\Plugins;
 use Spiral\RoadRunner\Console\Internal\Downloader\DLoadDownloader;
+use Spiral\RoadRunner\Console\Internal\Installation\ExistingBinary;
 use Spiral\RoadRunner\Console\Internal\Option\ArchitectureOption;
 use Spiral\RoadRunner\Console\Internal\Option\InstallationLocationOption;
 use Spiral\RoadRunner\Console\Internal\Option\OperatingSystemOption;
@@ -82,7 +83,7 @@ final class GetBinaryCommand extends Command
         $binary = $target . ($os === OperatingSystem::OS_WINDOWS ? '/rr.exe' : '/rr');
         $installed = false;
 
-        if ($this->checkExisting($binary, $io)) {
+        if (ExistingBinary::mayInstall($binary, 'RoadRunner', $io)) {
             $code = $this->downloader->download(
                 software: 'rr',
                 constraint: $this->version->get($input, $io),
@@ -181,20 +182,5 @@ final class GetBinaryCommand extends Command
         }
 
         \file_put_contents($to, $config);
-    }
-
-    private function checkExisting(string $binary, StyleInterface $io): bool
-    {
-        if (\is_file($binary)) {
-            $io->warning('RoadRunner binary file already exists!');
-
-            if (! $io->confirm('Do you want overwrite it?', false)) {
-                $io->note('Skipping RoadRunner installation...');
-
-                return false;
-            }
-        }
-
-        return true;
     }
 }
