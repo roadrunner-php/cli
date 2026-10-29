@@ -71,7 +71,7 @@ vendor/bin/rr get-grpc-tools
    - protoc-gen-php-grpc: 3.*
 ```
 
-The protoc version follows the protobuf runtime of the project, since the generated code is only guaranteed to work with the runtime of the same protoc major: the PHP runtime minor is the protoc major (`google/protobuf` 4.33.x takes protoc 33.x, 5.36.x takes 36.x; up to 3.20 both shared one version). The runtime is `ext-protobuf` when it is loaded, or else the `google/protobuf` package installed in the project (the nearest directory up from the working one with a `composer.json`); without either, the latest protoc is installed. `--protoc`, `--buf` and `--plugin` (for `protoc-gen-php-grpc`) take a version constraint each, e.g. `--protoc=^33.0`.
+The protoc version follows the protobuf runtime of the project, since the generated code is only guaranteed to work with the runtime of the same protoc major: the PHP runtime minor is the protoc major (`google/protobuf` 4.33.x takes protoc 33.x, 5.36.x takes 36.x; up to 3.20 both shared one version). The runtime is `ext-protobuf` when it is loaded, or else the `google/protobuf` package installed in the project (the nearest directory up from the working one with a `composer.json`); without either, or when its version does not tell the protoc major (e.g. a branch), a protoc already in the location stays whatever its version, or else the latest one is installed. `--protoc`, `--buf` and `--plugin` (for `protoc-gen-php-grpc`) take a version constraint each, e.g. `--protoc=^33.0`. A `buf` or `protoc` already in the location stays when its `--version` satisfies the constraint and is replaced otherwise, also when it does not run on this machine; `protoc-gen-php-grpc` is downloaded on every run.
 
 ## Commands
 
@@ -92,7 +92,8 @@ The protoc version follows the protobuf runtime of the project, since the genera
 - `get-grpc-tools` - installs `buf`, `protoc` and `protoc-gen-php-grpc`, the binaries `buf generate` needs to
   generate gRPC code, see [gRPC tools](#grpc-tools). The versions default to buf 1.x, the protoc major the project's
   protobuf runtime supports and `protoc-gen-php-grpc` of the RoadRunner line `get-binary` installs; `--buf`, `--protoc`
-  and `--plugin` override them. Binaries already in the location are kept unless the overwrite is confirmed.
+  and `--plugin` override them. Without asking, it keeps a binary already in the location only when its version
+  satisfies the constraint, see [gRPC tools](#grpc-tools).
 - `download-protoc-binary` - **deprecated**, use `get-grpc-tools`. Installs only the `protoc-gen-php-grpc` plugin,
   not protoc itself.
 - `versions` - displays a list of available RoadRunner binary versions.

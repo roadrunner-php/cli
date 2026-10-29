@@ -69,7 +69,7 @@ final class GetGrpcToolsCommandTest
             Assert::same($call->getOption('path'), $this->dir);
             Assert::same($call->getOption('os'), 'darwin');
             Assert::same($call->getOption('arch'), 'arm64');
-            Assert::true($call->getOption('force'));
+            Assert::false($call->getOption('force'));
         }
         Assert::string($tester->getDisplay())
             ->contains('google/protobuf 5.36.2 -> protoc ^36.0')
@@ -127,7 +127,7 @@ final class GetGrpcToolsCommandTest
 
     #[DataSet([null, 'Neither google/protobuf nor ext-protobuf is installed'], 'no runtime')]
     #[DataSet(['dev-main', 'Can not tell the protoc version for google/protobuf dev-main'], 'branch')]
-    public function installsLatestProtocWithWarning(?string $version, string $warning): void
+    public function acceptsAnyProtocWithWarning(?string $version, string $warning): void
     {
         $get = new DLoadGetSpy();
         $runtime = $version === null ? null : new ProtobufRuntime(ProtobufRuntime::PACKAGE, $version);
@@ -137,7 +137,9 @@ final class GetGrpcToolsCommandTest
 
         Assert::same($status, 0, $tester->getDisplay());
         Assert::same($get->calls[1]->getArgument('software'), ['protoc:*@stable']);
-        Assert::string($this->display($tester))->contains($warning)->contains('--protoc=<constraint>');
+        Assert::string($this->display($tester))->contains($warning)
+            ->contains('keeping an installed protoc or installing the latest')
+            ->contains('--protoc=<constraint>');
     }
 
     public function suggestsProtocOptionWhenDerivedVersionFails(): void
@@ -172,37 +174,26 @@ final class GetGrpcToolsCommandTest
 
     #[DataSet(['linux', ''])]
     #[DataSet(['windows', '.exe'])]
-    public function keepsExistingBinariesUnlessConfirmed(string $os, string $extension): void
+    public function leavesExistingBinariesToDLoadWithoutAsking(string $os, string $extension): void
     {
-        \file_put_contents($this->dir . '/protoc' . $extension, 'old binary');
+        foreach (['buf', 'protoc', 'protoc-gen-php-grpc'] as $tool) {
+            \file_put_contents($this->dir . '/' . $tool . $extension, 'old binary');
+        }
         $get = new DLoadGetSpy();
         $tester = $this->tester($get, new ProtobufRuntime(ProtobufRuntime::PACKAGE, '4.33.1'));
 
-        $status = $tester->execute($this->input(['--os' => $os]), ['interactive' => false]);
+        // An interactive run without answers: a prompt would fail it
+        $status = $tester->execute($this->input(['--os' => $os]));
 
         Assert::same($status, 0, $tester->getDisplay());
         Assert::same(
             \array_map(static fn($input): array => $input->getArgument('software'), $get->calls),
-            [['buf:^1@stable'], ['protoc-gen-php-grpc:3.*@stable']],
+            [['buf:^1@stable'], ['protoc:^33.0@stable'], ['protoc-gen-php-grpc:3.*@stable']],
         );
-        Assert::same(\file_get_contents($this->dir . '/protoc' . $extension), 'old binary');
-        Assert::string($tester->getDisplay())
-            ->contains('protoc binary file already exists!')
-            ->contains('Skipping protoc installation...');
-    }
-
-    public function overwritesExistingBinaryWhenConfirmed(): void
-    {
-        \file_put_contents($this->dir . '/buf', 'old binary');
-        $get = new DLoadGetSpy();
-        $tester = $this->tester($get, new ProtobufRuntime(ProtobufRuntime::PACKAGE, '4.33.1'));
-        $tester->setInputs(['yes']);
-
-        $status = $tester->execute($this->input(['--os' => 'linux']));
-
-        Assert::same($status, 0, $tester->getDisplay());
-        Assert::count($get->calls, 3);
-        Assert::same(\file_get_contents($this->dir . '/buf'), 'new binary');
+        foreach ($get->calls as $call) {
+            Assert::false($call->getOption('force'));
+        }
+        Assert::string($tester->getDisplay())->notContains('already exists')->contains('gRPC tools are ready');
     }
 
     /**

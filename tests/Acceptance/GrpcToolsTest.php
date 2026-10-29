@@ -23,6 +23,7 @@ final class GrpcToolsTest
 
     #[DataSet(['v5.36.2', '^36.0', '36.2'])]
     #[DataSet(['4.33.1', '^33.0', '33.6'])]
+    #[DataSet(['v3.21.12', '^21.0 || ~3.21.0', '21.12'], 'first split version')]
     #[DataSet(['v3.20.3', '~3.20.0', '3.20.3'], 'shared version scheme')]
     public function installsProtocOfProjectRuntime(string $runtime, string $constraint, string $protoc): void
     {
@@ -113,18 +114,40 @@ final class GrpcToolsTest
         Assert::true($this->dir->has('protoc-gen-php-grpc'));
     }
 
-    public function keepsExistingBinariesWithoutInteraction(): void
+    public function replacesExistingBinaryWithoutVersion(): void
     {
+        $this->installProtobuf('4.33.1');
         $this->dir->write('protoc', "old protoc\n");
 
         $result = $this->rr()->run(self::ARGS);
 
         Assert::same($result->exitCode, 0, (string) $result);
-        Assert::string($result->output())
-            ->contains('protoc binary file already exists!')
-            ->contains('Kept the installed protoc')
-            ->notContains('gRPC tools are ready');
-        Assert::same($this->dir->read('protoc'), "old protoc\n");
+        Assert::string($result->output())->notContains('already exists')->contains('gRPC tools are ready');
+        Assert::same(\trim($this->dir->read('protoc')), 'fake protoc 33.6 linux-x86_64');
+        Assert::same(FakeGitHub::downloads(), [
+            'buf-Linux-x86_64.tar.gz',
+            'protoc-33.6-linux-x86_64.zip',
+            'protoc-gen-php-grpc-3.4.0-linux-amd64.tar.gz',
+        ]);
+    }
+
+    /**
+     * protoc 21.x reports the version of the 3.21.x runtime.
+     */
+    #[DataSet(['4.33.1', '33.6'])]
+    #[DataSet(['3.21.12', '3.21.12'], 'protoc 21')]
+    public function keepsExistingBinaryOfMatchingVersion(string $runtime, string $protoc): void
+    {
+        \PHP_OS_FAMILY === 'Windows' and throw new SkipTest('A shell script stands in for the linux protoc');
+        $this->installProtobuf($runtime);
+        $script = "#!/bin/sh\necho libprotoc $protoc\n";
+        $this->dir->write('protoc', $script);
+        \chmod($this->dir->file('protoc'), 0755);
+
+        $result = $this->rr()->run(self::ARGS);
+
+        Assert::same($result->exitCode, 0, (string) $result);
+        Assert::same($this->dir->read('protoc'), $script);
         Assert::same(FakeGitHub::downloads(), ['buf-Linux-x86_64.tar.gz', 'protoc-gen-php-grpc-3.4.0-linux-amd64.tar.gz']);
     }
 
@@ -140,9 +163,8 @@ final class GrpcToolsTest
     {
         self::skipWithExtension();
         \mkdir($this->dir->file('vendor/composer'), 0777, true);
-        $this->dir->write('vendor/composer/installed.php', \sprintf(
-            "<?php return ['root' => [], 'versions' => ['google/protobuf' => ['pretty_version' => %s]]];",
-            \var_export($version, true),
-        ));
+        $this->dir->write('vendor/composer/installed.json', \json_encode([
+            'packages' => [['name' => 'google/protobuf', 'version' => $version]],
+        ]));
     }
 }

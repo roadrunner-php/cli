@@ -11,11 +11,9 @@ declare(strict_types=1);
 
 namespace Spiral\RoadRunner\Console;
 
-use Spiral\RoadRunner\Console\Environment\OperatingSystem;
 use Spiral\RoadRunner\Console\Internal\Downloader\DLoadDownloader;
 use Spiral\RoadRunner\Console\Internal\Environment\ProtobufRuntime;
 use Spiral\RoadRunner\Console\Internal\Environment\RoadRunnerVersion;
-use Spiral\RoadRunner\Console\Internal\Installation\ExistingBinary;
 use Spiral\RoadRunner\Console\Internal\Option\ArchitectureOption;
 use Spiral\RoadRunner\Console\Internal\Option\InstallationLocationOption;
 use Spiral\RoadRunner\Console\Internal\Option\OperatingSystemOption;
@@ -87,9 +85,9 @@ final class GetGrpcToolsCommand extends Command
         [$protoc, $derivedFrom] = $this->protocConstraint($input, $io);
 
         $tools = [
-            'buf' => $this->option($input, 'buf') ?? self::ANY_VERSION,
+            'buf' => $this->option($input, 'buf'),
             'protoc' => $protoc,
-            'protoc-gen-php-grpc' => $this->option($input, 'plugin') ?? self::ANY_VERSION,
+            'protoc-gen-php-grpc' => $this->option($input, 'plugin'),
         ];
 
         $output->writeln(' Versions:');
@@ -99,14 +97,9 @@ final class GetGrpcToolsCommand extends Command
         $output->writeln('');
 
         $failed = [];
-        $kept = [];
         foreach ($tools as $tool => $constraint) {
-            $binary = $target . '/' . $tool . ($os === OperatingSystem::OS_WINDOWS ? '.exe' : '');
-            if (! ExistingBinary::mayInstall($binary, $tool, $io)) {
-                $kept[] = $tool;
-                continue;
-            }
-
+            // Without force DLoad keeps a binary whose `--version` satisfies the constraint and replaces any other,
+            // so protoc-gen-php-grpc, which has no version command, is downloaded every time
             $code = $this->downloader->download(
                 software: $tool,
                 constraint: $constraint,
@@ -114,7 +107,7 @@ final class GetGrpcToolsCommand extends Command
                 os: $os,
                 arch: $arch,
                 location: $target,
-                force: true,
+                force: false,
                 output: $output,
             );
 
@@ -138,15 +131,6 @@ final class GetGrpcToolsCommand extends Command
             $io->error('Not installed: ' . \implode(', ', $failed));
 
             return self::FAILURE;
-        }
-
-        if ($kept !== []) {
-            $io->warning(\sprintf(
-                'Kept the installed %s, which may not match the versions above. Confirm the overwrite to update.',
-                \implode(', ', $kept),
-            ));
-
-            return self::SUCCESS;
         }
 
         $io->success('gRPC tools are ready in ' . $target);
@@ -182,9 +166,9 @@ final class GetGrpcToolsCommand extends Command
     }
 
     /**
-     * The option value; an empty one falls back to the option default.
-     *
-     * @return non-empty-string|null Null when neither is set.
+     * @param 'buf'|'plugin'|'protoc' $name
+     * @return ($name is 'protoc' ? non-empty-string|null : non-empty-string) The option's default when it is
+     *         empty or not given; protoc has none.
      */
     private function option(InputInterface $input, string $name): ?string
     {
@@ -194,10 +178,8 @@ final class GetGrpcToolsCommand extends Command
             return $value;
         }
 
-        /** @var mixed $default */
-        $default = $this->getDefinition()->getOption($name)->getDefault();
-
-        return \is_string($default) && $default !== '' ? $default : null;
+        /** @var non-empty-string|null */
+        return $this->getDefinition()->getOption($name)->getDefault();
     }
 
     /**
@@ -213,7 +195,7 @@ final class GetGrpcToolsCommand extends Command
         $runtime = ($this->runtime)();
         if ($runtime === null) {
             $io->warning(\sprintf(
-                'Neither %s nor %s is installed: installing the latest protoc. Choose a version with --protoc=<constraint>.',
+                'Neither %s nor %s is installed: keeping an installed protoc or installing the latest. Choose a version with --protoc=<constraint>.',
                 ProtobufRuntime::PACKAGE,
                 ProtobufRuntime::EXTENSION,
             ));
@@ -224,7 +206,7 @@ final class GetGrpcToolsCommand extends Command
         $constraint = $runtime->protocConstraint();
         if ($constraint === null) {
             $io->warning(\sprintf(
-                'Can not tell the protoc version for %s %s: installing the latest protoc. Choose a version with --protoc=<constraint>.',
+                'Can not tell the protoc version for %s %s: keeping an installed protoc or installing the latest. Choose a version with --protoc=<constraint>.',
                 $runtime->name,
                 $runtime->version,
             ));

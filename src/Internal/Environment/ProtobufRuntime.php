@@ -32,20 +32,16 @@ final class ProtobufRuntime
     ) {}
 
     /**
-     * Looks for ext-protobuf, then for google/protobuf in the project, then in the Composer installation running this tool.
+     * Looks for ext-protobuf, then for google/protobuf in the project, or in the Composer installation running this tool
+     * when there is no project.
      *
      * The extension goes first: once loaded it defines the `Google\Protobuf` classes, so the package is never autoloaded.
-     * The project is read from its own `installed.php`: run from a global installation or a PHAR,
-     * {@see InstalledVersions} knows only the packages installed next to this tool,
-     * so it is asked only when the project has no `installed.php`.
      *
      * @param string $projectDir Root of the project, see {@see self::projectDir()}.
      */
     public static function detect(string $projectDir): ?self
     {
-        return self::fromExtension() ?? (self::installedFile($projectDir) === null
-            ? self::fromInstalledVersions()
-            : self::fromProject($projectDir));
+        return self::fromExtension() ?? self::fromPackage($projectDir);
     }
 
     /**
@@ -71,26 +67,23 @@ final class ProtobufRuntime
         return $workingDir;
     }
 
-    public static function fromProject(string $projectDir): ?self
+    /**
+     * Looks for google/protobuf in the project's `installed.json`, or in the Composer installation running this tool
+     * when there is no project manifest at all.
+     *
+     * Run from a global installation or a PHAR, {@see InstalledVersions} knows only the packages installed next
+     * to this tool, so a project with its own manifest is never matched against them, even before `composer install`.
+     * The file is decoded rather than `installed.php` included: the project may be any directory above the working one.
+     */
+    public static function fromPackage(string $projectDir): ?self
     {
-        $file = self::installedFile($projectDir);
-        if ($file === null) {
-            return null;
-        }
+        $file = self::vendorDir($projectDir) . '/composer/installed.json';
 
-        /**
-         * @psalm-suppress UnresolvableInclude
-         * @var mixed $installed
-         */
-        $installed = (static fn(string $file): mixed => require $file)($file);
-        /** @var mixed $package */
-        $package = \is_array($installed) && \is_array($installed['versions'] ?? null)
-            ? $installed['versions'][self::PACKAGE] ?? null
-            : null;
-        /** @var mixed $version */
-        $version = \is_array($package) ? $package['pretty_version'] ?? null : null;
-
-        return \is_string($version) ? new self(self::PACKAGE, $version) : null;
+        return match (true) {
+            \is_file($file) => self::fromInstalledFile($file),
+            \is_file(self::manifest($projectDir)) => null,
+            default => self::fromInstalledVersions(),
+        };
     }
 
     public static function fromInstalledVersions(): ?self
@@ -116,6 +109,7 @@ final class ProtobufRuntime
      *
      * Since protobuf 21 the PHP runtime minor is the protoc major (3.21.x and protoc 21.x, 4.33.x and 33.x,
      * 5.36.x and 36.x), and the runtime major is bumped on its own. Up to 3.20 both shared one version.
+     * The constraint also checks an installed protoc, and protoc 21.x reports itself as `libprotoc 3.21.x`.
      *
      * @return non-empty-string|null Null when the version is not a release number, e.g. a branch.
      */
@@ -128,6 +122,7 @@ final class ProtobufRuntime
         [, $major, $minor] = \array_map(\intval(...), $m);
 
         return match (true) {
+            $minor === 21 => '^21.0 || ~3.21.0',
             $minor > 20 => \sprintf('^%d.0', $minor),
             $major === 3 => \sprintf('~3.%d.0', $minor),
             default => null,
@@ -135,13 +130,26 @@ final class ProtobufRuntime
     }
 
     /**
-     * @return string|null The project's `installed.php`, null when there is none.
+     * Reads both the Composer 2 `{"packages": [...]}` layout and the Composer 1 bare list of packages.
      */
-    private static function installedFile(string $projectDir): ?string
+    private static function fromInstalledFile(string $file): ?self
     {
-        $file = self::vendorDir($projectDir) . '/composer/installed.php';
+        /** @var mixed $installed */
+        $installed = \json_decode((string) @\file_get_contents($file), true);
+        /** @var mixed $packages */
+        $packages = \is_array($installed) ? $installed['packages'] ?? $installed : null;
 
-        return \is_file($file) ? $file : null;
+        /** @var mixed $package */
+        foreach (\is_array($packages) ? $packages : [] as $package) {
+            if (\is_array($package) && ($package['name'] ?? null) === self::PACKAGE) {
+                /** @var mixed $version */
+                $version = $package['version'] ?? null;
+
+                return \is_string($version) ? new self(self::PACKAGE, $version) : null;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -152,10 +160,8 @@ final class ProtobufRuntime
         $vendor = Environment::get('COMPOSER_VENDOR_DIR');
 
         if ($vendor === null || $vendor === '') {
-            $file = self::composerFile();
-            $file = self::isAbsolute($file) ? $file : $projectDir . '/' . $file;
             /** @var mixed $composer */
-            $composer = \json_decode((string) @\file_get_contents($file), true);
+            $composer = \json_decode((string) @\file_get_contents(self::manifest($projectDir)), true);
             /** @var mixed $vendor */
             $vendor = \is_array($composer) ? $composer['config']['vendor-dir'] ?? null : null;
             $vendor = \is_string($vendor) && $vendor !== '' ? $vendor : 'vendor';
@@ -177,6 +183,13 @@ final class ProtobufRuntime
         $file = \trim(Environment::get('COMPOSER') ?? '');
 
         return $file === '' ? 'composer.json' : $file;
+    }
+
+    private static function manifest(string $projectDir): string
+    {
+        $file = self::composerFile();
+
+        return self::isAbsolute($file) ? $file : $projectDir . '/' . $file;
     }
 
     private static function userDir(): ?string

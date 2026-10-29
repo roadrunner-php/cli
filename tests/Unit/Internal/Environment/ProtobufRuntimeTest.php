@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Spiral\RoadRunner\Console\Tests\Unit\Internal\Environment;
 
 use Composer\InstalledVersions;
+use Internal\DLoad\Module\Version\Constraint;
+use Internal\DLoad\Module\Version\Version;
 use Spiral\RoadRunner\Console\Internal\Environment\ProtobufRuntime;
 use Spiral\RoadRunner\Console\Tests\Unit\Stub\TempDirectory;
 use Testo\Assert;
@@ -26,7 +28,8 @@ final class ProtobufRuntimeTest
      */
     #[DataSet(['3.20.3', '~3.20.0'], 'last shared version')]
     #[DataSet(['3.6.1', '~3.6.0'], 'old shared version')]
-    #[DataSet(['3.21.12', '^21.0'], 'first split version')]
+    #[DataSet(['3.21.12', '^21.0 || ~3.21.0'], 'first split version')]
+    #[DataSet(['3.22.0', '^22.0'], 'second split version')]
     #[DataSet(['3.25.5', '^25.0'], 'last 3.x runtime')]
     #[DataSet(['4.26.0', '^26.0'], 'first 4.x runtime')]
     #[DataSet(['4.33.1', '^33.0'])]
@@ -45,11 +48,31 @@ final class ProtobufRuntimeTest
         Assert::same($runtime->protocConstraint(), $constraint);
     }
 
+    /**
+     * The constraint picks the release by its tag and keeps an installed protoc by its `--version`:
+     * protoc 21.x reports `libprotoc 3.21.x`, protoc 22 and later `libprotoc 22.0`.
+     */
+    #[DataSet(['3.21.12', '21.12', true], 'protoc 21 release')]
+    #[DataSet(['3.21.12', '3.21.12', true], 'protoc 21 binary')]
+    #[DataSet(['3.21.12', '3.2.0', false], 'protoc 3.2')]
+    #[DataSet(['3.21.12', '22.0', false], 'protoc 22')]
+    #[DataSet(['3.22.0', '22.5', true], 'protoc 22 release and binary')]
+    #[DataSet(['3.20.3', '3.20.3', true], 'shared version')]
+    public function protocConstraintMatchesReleaseAndBinary(string $runtime, string $protoc, bool $satisfies): void
+    {
+        $constraint = (new ProtobufRuntime(ProtobufRuntime::PACKAGE, $runtime))->protocConstraint();
+
+        Assert::same(
+            Constraint::fromConstraintString((string) $constraint)->isSatisfiedBy(Version::fromVersionString($protoc)),
+            $satisfies,
+        );
+    }
+
     public function readsVersionFromProjectInstallation(): void
     {
-        $this->installed('vendor', ['google/protobuf' => ['pretty_version' => 'v5.36.2']]);
+        $this->installed('vendor', [['name' => 'google/protobuf', 'version' => 'v5.36.2']]);
 
-        $runtime = ProtobufRuntime::fromProject($this->dir);
+        $runtime = ProtobufRuntime::fromPackage($this->dir);
 
         Assert::same($runtime?->name, 'google/protobuf');
         Assert::same($runtime?->version, 'v5.36.2');
@@ -58,19 +81,19 @@ final class ProtobufRuntimeTest
     public function honoursVendorDirOfProject(): void
     {
         \file_put_contents($this->dir . '/composer.json', '{"config": {"vendor-dir": "lib/vendor"}}');
-        $this->installed('vendor', ['google/protobuf' => ['pretty_version' => '4.26.0']]);
-        $this->installed('lib/vendor', ['google/protobuf' => ['pretty_version' => '4.33.1']]);
+        $this->installed('vendor', [['name' => 'google/protobuf', 'version' => '4.26.0']]);
+        $this->installed('lib/vendor', [['name' => 'google/protobuf', 'version' => '4.33.1']]);
 
-        Assert::same(ProtobufRuntime::fromProject($this->dir)?->version, '4.33.1');
+        Assert::same(ProtobufRuntime::fromPackage($this->dir)?->version, '4.33.1');
     }
 
     public function honoursComposerVendorDirVariable(): void
     {
-        $this->installed('deps', ['google/protobuf' => ['pretty_version' => '4.33.1']]);
+        $this->installed('deps', [['name' => 'google/protobuf', 'version' => '4.33.1']]);
         $_SERVER['COMPOSER_VENDOR_DIR'] = 'deps';
 
         try {
-            $runtime = ProtobufRuntime::fromProject($this->dir);
+            $runtime = ProtobufRuntime::fromPackage($this->dir);
         } finally {
             unset($_SERVER['COMPOSER_VENDOR_DIR']);
         }
@@ -81,20 +104,20 @@ final class ProtobufRuntimeTest
     public function honoursComposerVariable(): void
     {
         \file_put_contents($this->dir . '/app.json', '{"config": {"vendor-dir": "deps"}}');
-        $this->installed('deps', ['google/protobuf' => ['pretty_version' => '4.33.1']]);
+        $this->installed('deps', [['name' => 'google/protobuf', 'version' => '4.33.1']]);
         $_SERVER['COMPOSER'] = 'app.json';
 
-        Assert::same(ProtobufRuntime::fromProject($this->dir)?->version, '4.33.1');
+        Assert::same(ProtobufRuntime::fromPackage($this->dir)?->version, '4.33.1');
     }
 
     public function expandsUserDirInVendorDir(): void
     {
         \mkdir($this->dir . '/project');
         \file_put_contents($this->dir . '/project/composer.json', '{"config": {"vendor-dir": "~/deps"}}');
-        $this->installed('deps', ['google/protobuf' => ['pretty_version' => '4.33.1']]);
+        $this->installed('deps', [['name' => 'google/protobuf', 'version' => '4.33.1']]);
         $_SERVER['HOME'] = $this->dir;
 
-        Assert::same(ProtobufRuntime::fromProject($this->dir . '/project')?->version, '4.33.1');
+        Assert::same(ProtobufRuntime::fromPackage($this->dir . '/project')?->version, '4.33.1');
     }
 
     public function findsProjectUpFromWorkingDir(): void
@@ -125,18 +148,29 @@ final class ProtobufRuntimeTest
         Assert::same(ProtobufRuntime::projectDir($this->dir . '/home/proto'), $this->dir . '/home/proto');
     }
 
-    #[DataSet([['roadrunner/worker' => ['pretty_version' => '3.8.0']]], 'other packages')]
-    #[DataSet([['google/protobuf' => ['replaced' => ['*']]]], 'replaced package')]
-    public function findsNothingInProjectWithoutPackage(array $versions): void
+    public function readsComposer1Installation(): void
     {
-        $this->installed('vendor', $versions);
+        \mkdir($this->dir . '/vendor/composer', 0777, true);
+        \file_put_contents(
+            $this->dir . '/vendor/composer/installed.json',
+            \json_encode([['name' => 'google/protobuf', 'version' => 'v3.20.3']]),
+        );
 
-        Assert::null(ProtobufRuntime::fromProject($this->dir));
+        Assert::same(ProtobufRuntime::fromPackage($this->dir)?->version, 'v3.20.3');
+    }
+
+    #[DataSet([[['name' => 'roadrunner/worker', 'version' => '3.8.0']]], 'other packages')]
+    #[DataSet([[['name' => 'acme/protobuf', 'version' => '1.0.0', 'replace' => ['google/protobuf' => '*']]]], 'replaced package')]
+    public function findsNothingInProjectWithoutPackage(array $packages): void
+    {
+        $this->installed('vendor', $packages);
+
+        Assert::null(ProtobufRuntime::fromPackage($this->dir));
     }
 
     public function findsNothingInProjectWithoutVendor(): void
     {
-        Assert::null(ProtobufRuntime::fromProject($this->dir));
+        Assert::null(ProtobufRuntime::fromPackage($this->dir));
     }
 
     public function readsVersionFromRunningInstallation(): void
@@ -158,7 +192,7 @@ final class ProtobufRuntimeTest
 
     public function prefersProjectOverRunningInstallation(): void
     {
-        $this->installed('vendor', ['google/protobuf' => ['pretty_version' => '5.36.2']]);
+        $this->installed('vendor', [['name' => 'google/protobuf', 'version' => '5.36.2']]);
         InstalledVersions::reload(['versions' => ['google/protobuf' => ['pretty_version' => '4.26.0']]]);
 
         Assert::same(ProtobufRuntime::detect($this->dir)?->version, \phpversion('protobuf') ?: '5.36.2');
@@ -169,6 +203,31 @@ final class ProtobufRuntimeTest
         InstalledVersions::reload(['versions' => ['google/protobuf' => ['pretty_version' => '4.26.0']]]);
 
         Assert::same(ProtobufRuntime::detect($this->dir)?->version, \phpversion('protobuf') ?: '4.26.0');
+        Assert::same(ProtobufRuntime::fromPackage($this->dir)?->version, '4.26.0');
+    }
+
+    /**
+     * The package next to this tool is not the runtime of a project that is not installed yet.
+     */
+    #[DataSet(['composer.json'], 'composer.json')]
+    #[DataSet(['app.json'], 'COMPOSER variable')]
+    public function ignoresRunningInstallationWhenProjectIsNotInstalled(string $manifest): void
+    {
+        \file_put_contents($this->dir . '/' . $manifest, '{}');
+        $manifest === 'composer.json' or $_SERVER['COMPOSER'] = $manifest;
+        InstalledVersions::reload(['versions' => ['google/protobuf' => ['pretty_version' => '4.26.0']]]);
+
+        Assert::null(ProtobufRuntime::fromPackage($this->dir));
+    }
+
+    public function ignoresRunningInstallationWhenAbsoluteManifestIsNotInstalled(): void
+    {
+        \mkdir($this->dir . '/project');
+        \file_put_contents($this->dir . '/app.json', '{}');
+        $_SERVER['COMPOSER'] = $this->dir . '/app.json';
+        InstalledVersions::reload(['versions' => ['google/protobuf' => ['pretty_version' => '4.26.0']]]);
+
+        Assert::null(ProtobufRuntime::fromPackage($this->dir . '/project'));
     }
 
     /**
@@ -177,7 +236,7 @@ final class ProtobufRuntimeTest
     public function ignoresRunningInstallationWhenProjectLacksPackage(): void
     {
         \extension_loaded('protobuf') and throw new SkipTest('ext-protobuf is loaded');
-        $this->installed('vendor', ['roadrunner/worker' => ['pretty_version' => '3.8.0']]);
+        $this->installed('vendor', [['name' => 'roadrunner/worker', 'version' => '3.8.0']]);
         InstalledVersions::reload(['versions' => ['google/protobuf' => ['pretty_version' => '4.26.0']]]);
 
         Assert::null(ProtobufRuntime::detect($this->dir));
@@ -188,7 +247,7 @@ final class ProtobufRuntimeTest
      */
     public function prefersExtensionOverPackage(): void
     {
-        $this->installed('vendor', ['google/protobuf' => ['pretty_version' => '5.36.2']]);
+        $this->installed('vendor', [['name' => 'google/protobuf', 'version' => '5.36.2']]);
 
         $runtime = ProtobufRuntime::detect($this->dir);
 
@@ -225,12 +284,12 @@ final class ProtobufRuntimeTest
         (new \ReflectionClass(InstalledVersions::class))->setStaticPropertyValue('canGetVendors', $this->canGetVendors);
     }
 
-    private function installed(string $vendor, array $versions): void
+    private function installed(string $vendor, array $packages): void
     {
         \mkdir($this->dir . '/' . $vendor . '/composer', 0777, true);
         \file_put_contents(
-            $this->dir . '/' . $vendor . '/composer/installed.php',
-            '<?php return ' . \var_export(['root' => [], 'versions' => $versions], true) . ';',
+            $this->dir . '/' . $vendor . '/composer/installed.json',
+            \json_encode(['packages' => $packages, 'dev' => true, 'dev-package-names' => []]),
         );
     }
 }

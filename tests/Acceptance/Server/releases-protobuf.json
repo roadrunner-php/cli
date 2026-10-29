@@ -41,6 +41,15 @@
         ]
     },
     {
+        "tag_name": "v21.12",
+        "prerelease": false,
+        "assets": [
+            "protobuf-all-21.12.tar.gz",
+            "protoc-21.12-linux-x86_64.zip",
+            "protoc-21.12-win64.zip"
+        ]
+    },
+    {
         "tag_name": "v3.20.3",
         "prerelease": false,
         "assets": [
