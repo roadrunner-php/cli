@@ -120,7 +120,10 @@ final class GrpcToolsTest
         $result = $this->rr()->run(self::ARGS);
 
         Assert::same($result->exitCode, 0, (string) $result);
-        Assert::string($result->output())->contains('protoc binary file already exists!');
+        Assert::string($result->output())
+            ->contains('protoc binary file already exists!')
+            ->contains('Kept the installed protoc')
+            ->notContains('gRPC tools are ready');
         Assert::same($this->dir->read('protoc'), "old protoc\n");
         Assert::same(FakeGitHub::downloads(), ['buf-Linux-x86_64.tar.gz', 'protoc-gen-php-grpc-3.4.0-linux-amd64.tar.gz']);
     }

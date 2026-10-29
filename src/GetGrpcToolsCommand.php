@@ -99,9 +99,11 @@ final class GetGrpcToolsCommand extends Command
         $output->writeln('');
 
         $failed = [];
+        $kept = [];
         foreach ($tools as $tool => $constraint) {
             $binary = $target . '/' . $tool . ($os === OperatingSystem::OS_WINDOWS ? '.exe' : '');
             if (! ExistingBinary::mayInstall($binary, $tool, $io)) {
+                $kept[] = $tool;
                 continue;
             }
 
@@ -136,6 +138,15 @@ final class GetGrpcToolsCommand extends Command
             $io->error('Not installed: ' . \implode(', ', $failed));
 
             return self::FAILURE;
+        }
+
+        if ($kept !== []) {
+            $io->warning(\sprintf(
+                'Kept the installed %s, which may not match the versions above. Confirm the overwrite to update.',
+                \implode(', ', $kept),
+            ));
+
+            return self::SUCCESS;
         }
 
         $io->success('gRPC tools are ready in ' . $target);
