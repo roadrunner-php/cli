@@ -88,6 +88,39 @@ final class GetGrpcToolsCommandTest
         Assert::string($tester->getDisplay())->contains('ext-protobuf 4.33.1 -> protoc ^33.0');
     }
 
+    public function warnsWhenProjectPackageNeedsAnotherProtoc(): void
+    {
+        $get = new DLoadGetSpy();
+        $tester = $this->tester($get, [
+            new ProtobufRuntime(ProtobufRuntime::EXTENSION, '4.29.0'),
+            new ProtobufRuntime(ProtobufRuntime::PACKAGE, 'v5.36.2'),
+        ]);
+
+        $status = $tester->execute($this->input(), ['interactive' => false]);
+
+        Assert::same($status, 0, $tester->getDisplay());
+        Assert::same($get->calls[1]->getArgument('software'), ['protoc:^29.0@stable']);
+        Assert::string($this->display($tester))->contains(
+            'ext-protobuf 4.29.0 (protoc ^29.0) is used, while the project has google/protobuf v5.36.2 (protoc ^36.0); '
+            . 'choose with --protoc=<constraint>.',
+        );
+    }
+
+    public function keepsQuietWhenRuntimesNeedSameProtoc(): void
+    {
+        $get = new DLoadGetSpy();
+        $tester = $this->tester($get, [
+            new ProtobufRuntime(ProtobufRuntime::EXTENSION, '4.33.1'),
+            new ProtobufRuntime(ProtobufRuntime::PACKAGE, 'v4.33.4'),
+        ]);
+
+        $status = $tester->execute($this->input(), ['interactive' => false]);
+
+        Assert::same($status, 0, $tester->getDisplay());
+        Assert::same($get->calls[1]->getArgument('software'), ['protoc:^33.0@stable']);
+        Assert::string($tester->getDisplay())->notContains('[WARNING]')->notContains('is used, while');
+    }
+
     public function takesVersionsFromOptions(): void
     {
         $get = new DLoadGetSpy();
@@ -210,11 +243,18 @@ final class GetGrpcToolsCommandTest
         ];
     }
 
-    private function tester(DLoadGetSpy $get, ProtobufRuntime|\Closure|null $runtime): CommandTester
+    /**
+     * @param ProtobufRuntime|list<ProtobufRuntime>|\Closure|null $runtimes
+     */
+    private function tester(DLoadGetSpy $get, ProtobufRuntime|array|\Closure|null $runtimes): CommandTester
     {
-        $detect = $runtime instanceof \Closure ? $runtime : static fn(): ?ProtobufRuntime => $runtime;
+        $detect = match (true) {
+            $runtimes instanceof \Closure => $runtimes,
+            $runtimes instanceof ProtobufRuntime => static fn(): array => [$runtimes],
+            default => static fn(): array => $runtimes ?? [],
+        };
 
-        return new CommandTester(new GetGrpcToolsCommand(downloader: new DLoadDownloader($get), runtime: $detect));
+        return new CommandTester(new GetGrpcToolsCommand(downloader: new DLoadDownloader($get), runtimes: $detect));
     }
 
     /**

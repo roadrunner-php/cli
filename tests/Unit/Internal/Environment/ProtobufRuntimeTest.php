@@ -195,14 +195,14 @@ final class ProtobufRuntimeTest
         $this->installed('vendor', [['name' => 'google/protobuf', 'version' => '5.36.2']]);
         InstalledVersions::reload(['versions' => ['google/protobuf' => ['pretty_version' => '4.26.0']]]);
 
-        Assert::same(ProtobufRuntime::detect($this->dir)?->version, \phpversion('protobuf') ?: '5.36.2');
+        Assert::same((ProtobufRuntime::detect($this->dir)[0] ?? null)?->version, \phpversion('protobuf') ?: '5.36.2');
     }
 
     public function fallsBackToRunningInstallation(): void
     {
         InstalledVersions::reload(['versions' => ['google/protobuf' => ['pretty_version' => '4.26.0']]]);
 
-        Assert::same(ProtobufRuntime::detect($this->dir)?->version, \phpversion('protobuf') ?: '4.26.0');
+        Assert::same((ProtobufRuntime::detect($this->dir)[0] ?? null)?->version, \phpversion('protobuf') ?: '4.26.0');
         Assert::same(ProtobufRuntime::fromPackage($this->dir)?->version, '4.26.0');
     }
 
@@ -239,7 +239,7 @@ final class ProtobufRuntimeTest
         $this->installed('vendor', [['name' => 'roadrunner/worker', 'version' => '3.8.0']]);
         InstalledVersions::reload(['versions' => ['google/protobuf' => ['pretty_version' => '4.26.0']]]);
 
-        Assert::null(ProtobufRuntime::detect($this->dir));
+        Assert::same(ProtobufRuntime::detect($this->dir), []);
     }
 
     /**
@@ -249,9 +249,22 @@ final class ProtobufRuntimeTest
     {
         $this->installed('vendor', [['name' => 'google/protobuf', 'version' => '5.36.2']]);
 
-        $runtime = ProtobufRuntime::detect($this->dir);
+        $runtime = ProtobufRuntime::detect($this->dir)[0] ?? null;
 
         Assert::same($runtime?->name, \extension_loaded('protobuf') ? 'ext-protobuf' : 'google/protobuf');
+    }
+
+    public function detectsBothRuntimes(): void
+    {
+        $this->installed('vendor', [['name' => 'google/protobuf', 'version' => '5.36.2']]);
+
+        $runtimes = ProtobufRuntime::detect($this->dir);
+
+        Assert::same(
+            \array_map(static fn(ProtobufRuntime $runtime): string => $runtime->name, $runtimes),
+            \extension_loaded('protobuf') ? ['ext-protobuf', 'google/protobuf'] : ['google/protobuf'],
+        );
+        Assert::same(\end($runtimes)->version, '5.36.2');
     }
 
     public function readsExtensionVersion(): void

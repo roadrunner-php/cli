@@ -36,12 +36,14 @@ final class ProtobufRuntime
      * when there is no project.
      *
      * The extension goes first: once loaded it defines the `Google\Protobuf` classes, so the package is never autoloaded.
+     * The package is still returned after it, for the project may run on a PHP without the extension.
      *
      * @param string $projectDir Root of the project, see {@see self::projectDir()}.
+     * @return list<self> Every runtime found, the one in use first.
      */
-    public static function detect(string $projectDir): ?self
+    public static function detect(string $projectDir): array
     {
-        return self::fromExtension() ?? self::fromPackage($projectDir);
+        return \array_values(\array_filter([self::fromExtension(), self::fromPackage($projectDir)]));
     }
 
     /**

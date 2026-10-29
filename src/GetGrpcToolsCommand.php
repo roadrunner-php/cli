@@ -40,17 +40,18 @@ final class GetGrpcToolsCommand extends Command
     private InstallationLocationOption $location;
     private DLoadDownloader $downloader;
 
-    /** @var \Closure(): ?ProtobufRuntime */
-    private \Closure $runtime;
+    /** @var \Closure(): list<ProtobufRuntime> */
+    private \Closure $runtimes;
 
     /**
-     * @param (\Closure(): ?ProtobufRuntime)|null $runtime Finds the protobuf runtime of the project;
-     *        {@see ProtobufRuntime::detect()} in the project found up from the working directory by default.
+     * @param (\Closure(): list<ProtobufRuntime>)|null $runtimes Finds the protobuf runtimes of the project, the one
+     *        in use first; {@see ProtobufRuntime::detect()} in the project found up from the working directory
+     *        by default.
      */
-    public function __construct(?string $name = null, ?DLoadDownloader $downloader = null, ?\Closure $runtime = null)
+    public function __construct(?string $name = null, ?DLoadDownloader $downloader = null, ?\Closure $runtimes = null)
     {
         $this->downloader = $downloader ?? new DLoadDownloader();
-        $this->runtime = $runtime ?? static fn(): ?ProtobufRuntime => ProtobufRuntime::detect(ProtobufRuntime::projectDir(\getcwd() ?: '.'));
+        $this->runtimes = $runtimes ?? static fn(): array => ProtobufRuntime::detect(ProtobufRuntime::projectDir(\getcwd() ?: '.'));
         parent::__construct($name ?? 'get-grpc-tools');
 
         $this->os = new OperatingSystemOption($this);
@@ -192,7 +193,8 @@ final class GetGrpcToolsCommand extends Command
             return [$option, null];
         }
 
-        $runtime = ($this->runtime)();
+        $runtimes = ($this->runtimes)();
+        $runtime = $runtimes[0] ?? null;
         if ($runtime === null) {
             $io->warning(\sprintf(
                 'Neither %s nor %s is installed: keeping an installed protoc or installing the latest. Choose a version with --protoc=<constraint>.',
@@ -216,6 +218,21 @@ final class GetGrpcToolsCommand extends Command
 
         $io->writeln(\sprintf(' %s <info>%s</info> -> protoc <info>%s</info>', $runtime->name, $runtime->version, $constraint));
         $io->newLine();
+
+        foreach (\array_slice($runtimes, 1) as $other) {
+            $otherConstraint = $other->protocConstraint();
+            if ($otherConstraint !== null && $otherConstraint !== $constraint) {
+                $io->warning(\sprintf(
+                    '%s %s (protoc %s) is used, while the project has %s %s (protoc %s); choose with --protoc=<constraint>.',
+                    $runtime->name,
+                    $runtime->version,
+                    $constraint,
+                    $other->name,
+                    $other->version,
+                    $otherConstraint,
+                ));
+            }
+        }
 
         return [$constraint, $runtime];
     }
