@@ -56,7 +56,7 @@ See the [RoadRunner documentation](https://docs.roadrunner.dev) for the configur
 
 ### gRPC tools
 
-Generating gRPC code with `buf generate` takes three binaries: [`buf`](https://buf.build), `protoc` (buf runs its built-in PHP generator) and `protoc-gen-php-grpc`. Download all of them into the project root:
+Generating gRPC code with `buf generate` takes three binaries: [`buf`](https://buf.build), `protoc` (buf runs its built-in PHP generator) and `protoc-gen-php-grpc`. Download all of them into the current directory (`--location` picks another one):
 
 ```bash
 vendor/bin/rr get-grpc-tools
@@ -99,7 +99,7 @@ The protoc version follows the protobuf runtime of the project, since the genera
 
 ### Common options
 
-The binary commands accept `--filter` (`-f`, version constraint; for `get-binary` and `download-protoc-binary` `*` means `>=3.0 <2000` and any other `||` alternative without an upper bound gets `<2000`, so the calendar releases have to be named explicitly, e.g. `2025.*` or `>=2025`; `get-grpc-tools` applies the same to `--plugin` and takes `--buf`/`--protoc` as they are), `--stability` (`-s`), `--os` (`-o`), `--arch` (`-a`) and `--location` (`-l`, target directory) options. `get-binary`, `get-grpc-tools` and `download-protoc-binary` download the binaries with [DLoad](https://github.com/php-internal/dload); a project's `dload.xml` does not affect them.
+The binary commands accept `--stability` (`-s`), `--os` (`-o`) and `--arch` (`-a`) options. `get-binary`, `download-protoc-binary` and `versions` take the version constraint as `--filter` (`-f`), `get-grpc-tools` as `--buf`, `--protoc` and `--plugin`. For `get-binary` and `download-protoc-binary` `*` means `>=3.0 <2000` and any other `||` alternative without an upper bound gets `<2000`, so the calendar releases have to be named explicitly, e.g. `2025.*` or `>=2025`; `get-grpc-tools` applies the same to `--plugin` and takes `--buf`/`--protoc` as they are. `get-binary`, `get-grpc-tools` and `download-protoc-binary` also accept `--location` (`-l`, target directory, the current one by default) and download the binaries with [DLoad](https://github.com/php-internal/dload); a project's `dload.xml` does not affect them.
 
 On a musl host such as Alpine they install the musl build of Linux on their own, even with `--os=linux`; `--os=unknown-musl` forces the musl build from any host.
 
