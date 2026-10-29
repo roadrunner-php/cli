@@ -8,6 +8,7 @@ use Composer\InstalledVersions;
 use Spiral\RoadRunner\Console\Internal\Environment\ProtobufRuntime;
 use Spiral\RoadRunner\Console\Tests\Unit\Stub\TempDirectory;
 use Testo\Assert;
+use Testo\Core\Exception\SkipTest;
 use Testo\Data\DataSet;
 use Testo\Lifecycle\AfterTest;
 use Testo\Lifecycle\BeforeTest;
@@ -168,6 +169,18 @@ final class ProtobufRuntimeTest
         InstalledVersions::reload(['versions' => ['google/protobuf' => ['pretty_version' => '4.26.0']]]);
 
         Assert::same(ProtobufRuntime::detect($this->dir)?->version, \phpversion('protobuf') ?: '4.26.0');
+    }
+
+    /**
+     * The package next to this tool is not the project's runtime.
+     */
+    public function ignoresRunningInstallationWhenProjectLacksPackage(): void
+    {
+        \extension_loaded('protobuf') and throw new SkipTest('ext-protobuf is loaded');
+        $this->installed('vendor', ['roadrunner/worker' => ['pretty_version' => '3.8.0']]);
+        InstalledVersions::reload(['versions' => ['google/protobuf' => ['pretty_version' => '4.26.0']]]);
+
+        Assert::null(ProtobufRuntime::detect($this->dir));
     }
 
     /**

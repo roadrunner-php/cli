@@ -36,13 +36,16 @@ final class ProtobufRuntime
      *
      * The extension goes first: once loaded it defines the `Google\Protobuf` classes, so the package is never autoloaded.
      * The project is read from its own `installed.php`: run from a global installation or a PHAR,
-     * {@see InstalledVersions} knows only the packages installed next to this tool.
+     * {@see InstalledVersions} knows only the packages installed next to this tool,
+     * so it is asked only when the project has no `installed.php`.
      *
      * @param string $projectDir Root of the project, see {@see self::projectDir()}.
      */
     public static function detect(string $projectDir): ?self
     {
-        return self::fromExtension() ?? self::fromProject($projectDir) ?? self::fromInstalledVersions();
+        return self::fromExtension() ?? (self::installedFile($projectDir) === null
+            ? self::fromInstalledVersions()
+            : self::fromProject($projectDir));
     }
 
     /**
@@ -70,8 +73,8 @@ final class ProtobufRuntime
 
     public static function fromProject(string $projectDir): ?self
     {
-        $file = self::vendorDir($projectDir) . '/composer/installed.php';
-        if (! \is_file($file)) {
+        $file = self::installedFile($projectDir);
+        if ($file === null) {
             return null;
         }
 
@@ -129,6 +132,16 @@ final class ProtobufRuntime
             $major === 3 => \sprintf('~3.%d.0', $minor),
             default => null,
         };
+    }
+
+    /**
+     * @return string|null The project's `installed.php`, null when there is none.
+     */
+    private static function installedFile(string $projectDir): ?string
+    {
+        $file = self::vendorDir($projectDir) . '/composer/installed.php';
+
+        return \is_file($file) ? $file : null;
     }
 
     /**
