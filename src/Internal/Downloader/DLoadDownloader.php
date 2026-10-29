@@ -81,7 +81,7 @@ final class DLoadDownloader
                 </software>
                 <software name="Buf" alias="buf">
                     <repository type="github" uri="%1$s/bufbuild/buf" asset-pattern="/^buf-.*/"/>
-                    <binary name="buf" version-command="--version"/>
+                    <binary name="buf" pattern="/^buf(-.*)?(\.exe)?$/" version-command="--version"/>
                 </software>
             </registry>
         </dload>
