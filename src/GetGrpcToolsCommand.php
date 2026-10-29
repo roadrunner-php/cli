@@ -87,9 +87,9 @@ final class GetGrpcToolsCommand extends Command
         [$protoc, $derivedFrom] = $this->protocConstraint($input, $io);
 
         $tools = [
-            'buf' => self::option($input, 'buf') ?? self::ANY_VERSION,
+            'buf' => $this->option($input, 'buf') ?? self::ANY_VERSION,
             'protoc' => $protoc,
-            'protoc-gen-php-grpc' => self::option($input, 'plugin') ?? self::ANY_VERSION,
+            'protoc-gen-php-grpc' => $this->option($input, 'plugin') ?? self::ANY_VERSION,
         ];
 
         $output->writeln(' Versions:');
@@ -171,14 +171,22 @@ final class GetGrpcToolsCommand extends Command
     }
 
     /**
-     * @return non-empty-string|null
+     * The option value; an empty one falls back to the option default.
+     *
+     * @return non-empty-string|null Null when neither is set.
      */
-    private static function option(InputInterface $input, string $name): ?string
+    private function option(InputInterface $input, string $name): ?string
     {
         /** @var mixed $value */
         $value = $input->getOption($name);
+        if (\is_string($value) && $value !== '') {
+            return $value;
+        }
 
-        return \is_string($value) && $value !== '' ? $value : null;
+        /** @var mixed $default */
+        $default = $this->getDefinition()->getOption($name)->getDefault();
+
+        return \is_string($default) && $default !== '' ? $default : null;
     }
 
     /**
@@ -186,7 +194,7 @@ final class GetGrpcToolsCommand extends Command
      */
     private function protocConstraint(InputInterface $input, SymfonyStyle $io): array
     {
-        $option = self::option($input, 'protoc');
+        $option = $this->option($input, 'protoc');
         if ($option !== null) {
             return [$option, null];
         }

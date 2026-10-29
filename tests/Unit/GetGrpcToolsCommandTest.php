@@ -7,6 +7,7 @@ namespace Spiral\RoadRunner\Console\Tests\Unit;
 use Spiral\RoadRunner\Console\GetGrpcToolsCommand;
 use Spiral\RoadRunner\Console\Internal\Downloader\DLoadDownloader;
 use Spiral\RoadRunner\Console\Internal\Environment\ProtobufRuntime;
+use Spiral\RoadRunner\Console\Internal\Environment\RoadRunnerVersion;
 use Spiral\RoadRunner\Console\Tests\Unit\Stub\DLoadGetSpy;
 use Spiral\RoadRunner\Console\Tests\Unit\Stub\TempDirectory;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -103,6 +104,24 @@ final class GetGrpcToolsCommandTest
         Assert::same(
             \array_map(static fn($input): array => $input->getArgument('software'), $get->calls),
             [['buf:1.50.*@beta'], ['protoc:^30.0@beta'], ['protoc-gen-php-grpc:3.0.*@beta']],
+        );
+    }
+
+    public function fallsBackToDefaultsForEmptyOptions(): void
+    {
+        $get = new DLoadGetSpy();
+        $tester = $this->tester($get, new ProtobufRuntime(ProtobufRuntime::PACKAGE, '5.36.2'));
+
+        $status = $tester->execute($this->input([
+            '--protoc' => '',
+            '--plugin' => '',
+            '--buf' => '',
+        ]), ['interactive' => false]);
+
+        Assert::same($status, 0, $tester->getDisplay());
+        Assert::same(
+            \array_map(static fn($input): array => $input->getArgument('software'), $get->calls),
+            [['buf:^1@stable'], ['protoc:^36.0@stable'], [\sprintf('protoc-gen-php-grpc:%s@stable', RoadRunnerVersion::constraint())]],
         );
     }
 
