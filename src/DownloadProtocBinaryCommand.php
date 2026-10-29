@@ -53,6 +53,7 @@ final class DownloadProtocBinaryCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+        $io->warning('download-protoc-binary is deprecated: use get-grpc-tools, which also installs protoc and buf.');
 
         $target = $this->location->get($input, $io);
         $os = $this->os->get($input, $io);

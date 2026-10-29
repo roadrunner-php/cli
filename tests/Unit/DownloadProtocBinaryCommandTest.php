@@ -65,6 +65,7 @@ final class DownloadProtocBinaryCommandTest
         Assert::same($get->calls[0]->getOption('os'), 'darwin');
         Assert::same($get->calls[0]->getOption('arch'), 'arm64');
         Assert::string($tester->getDisplay())
+            ->contains('download-protoc-binary is deprecated: use get-grpc-tools')
             ->contains('Version:          2025.1.*')
             ->contains('Operating System: darwin')
             ->contains('Architecture:     arm64');
