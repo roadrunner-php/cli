@@ -7,6 +7,7 @@ namespace Spiral\RoadRunner\Console\Tests\Acceptance;
 use Spiral\RoadRunner\Console\Tests\Acceptance\Support\FakeGitHub;
 use Spiral\RoadRunner\Console\Tests\Acceptance\Support\FakeGitHubCase;
 use Testo\Assert;
+use Testo\Core\Exception\SkipTest;
 use Testo\Data\DataSet;
 use Testo\Test;
 
@@ -55,6 +56,8 @@ final class GrpcToolsTest
 
     public function installsLatestProtocWithoutRuntime(): void
     {
+        self::skipWithExtension();
+
         $result = $this->rr()->run(self::ARGS);
 
         Assert::same($result->exitCode, 0, (string) $result);
@@ -100,8 +103,17 @@ final class GrpcToolsTest
         Assert::same(FakeGitHub::downloads(), ['buf-Linux-x86_64.tar.gz', 'protoc-gen-php-grpc-3.4.0-linux-amd64.tar.gz']);
     }
 
+    /**
+     * The rr subprocess prefers a loaded ext-protobuf to the google/protobuf of the project.
+     */
+    private static function skipWithExtension(): void
+    {
+        \extension_loaded('protobuf') and throw new SkipTest('ext-protobuf is loaded');
+    }
+
     private function installProtobuf(string $version): void
     {
+        self::skipWithExtension();
         \mkdir($this->dir->file('vendor/composer'), 0777, true);
         $this->dir->write('vendor/composer/installed.php', \sprintf(
             "<?php return ['root' => [], 'versions' => ['google/protobuf' => ['pretty_version' => %s]]];",

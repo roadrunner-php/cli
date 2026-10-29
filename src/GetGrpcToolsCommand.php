@@ -47,12 +47,12 @@ final class GetGrpcToolsCommand extends Command
 
     /**
      * @param (\Closure(): ?ProtobufRuntime)|null $runtime Finds the protobuf runtime of the project;
-     *        {@see ProtobufRuntime::detect()} in the working directory by default.
+     *        {@see ProtobufRuntime::detect()} in the project found up from the working directory by default.
      */
     public function __construct(?string $name = null, ?DLoadDownloader $downloader = null, ?\Closure $runtime = null)
     {
         $this->downloader = $downloader ?? new DLoadDownloader();
-        $this->runtime = $runtime ?? static fn(): ?ProtobufRuntime => ProtobufRuntime::detect(\getcwd() ?: '.');
+        $this->runtime = $runtime ?? static fn(): ?ProtobufRuntime => ProtobufRuntime::detect(ProtobufRuntime::projectDir(\getcwd() ?: '.'));
         parent::__construct($name ?? 'get-grpc-tools');
 
         $this->os = new OperatingSystemOption($this);

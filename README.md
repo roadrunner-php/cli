@@ -71,7 +71,7 @@ vendor/bin/rr get-grpc-tools
    - protoc-gen-php-grpc: 3.*
 ```
 
-The protoc version follows the protobuf runtime of the project, since the generated code is only guaranteed to work with the runtime of the same protoc major: the PHP runtime minor is the protoc major (`google/protobuf` 4.33.x takes protoc 33.x, 5.36.x takes 36.x; up to 3.20 both shared one version). The runtime is the `google/protobuf` package installed in the project in the working directory, or else `ext-protobuf`; without either, the latest protoc is installed. `--protoc`, `--buf` and `--plugin` (for `protoc-gen-php-grpc`) take a version constraint each, e.g. `--protoc=^33.0`.
+The protoc version follows the protobuf runtime of the project, since the generated code is only guaranteed to work with the runtime of the same protoc major: the PHP runtime minor is the protoc major (`google/protobuf` 4.33.x takes protoc 33.x, 5.36.x takes 36.x; up to 3.20 both shared one version). The runtime is `ext-protobuf` when it is loaded, or else the `google/protobuf` package installed in the project (the nearest directory up from the working one with a `composer.json`); without either, the latest protoc is installed. `--protoc`, `--buf` and `--plugin` (for `protoc-gen-php-grpc`) take a version constraint each, e.g. `--protoc=^33.0`.
 
 ## Commands
 

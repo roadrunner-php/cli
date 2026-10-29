@@ -32,16 +32,40 @@ final class ProtobufRuntime
     ) {}
 
     /**
-     * Looks for google/protobuf in the project, then in the Composer installation running this tool, then for ext-protobuf.
+     * Looks for ext-protobuf, then for google/protobuf in the project, then in the Composer installation running this tool.
      *
+     * The extension goes first: once loaded it defines the `Google\Protobuf` classes, so the package is never autoloaded.
      * The project is read from its own `installed.php`: run from a global installation or a PHAR,
      * {@see InstalledVersions} knows only the packages installed next to this tool.
      *
-     * @param string $projectDir Root of the project, where its `composer.json` is.
+     * @param string $projectDir Root of the project, see {@see self::projectDir()}.
      */
     public static function detect(string $projectDir): ?self
     {
-        return self::fromProject($projectDir) ?? self::fromInstalledVersions() ?? self::fromExtension();
+        return self::fromExtension() ?? self::fromProject($projectDir) ?? self::fromInstalledVersions();
+    }
+
+    /**
+     * Finds the project root as Composer does: the nearest directory up from the working one with a `composer.json`
+     * (or the file named by `COMPOSER`), looking neither in the user home nor in the filesystem root.
+     *
+     * @return string The working directory itself when none has the file.
+     */
+    public static function projectDir(string $workingDir): string
+    {
+        $file = self::composerFile();
+        if (self::isAbsolute($file)) {
+            return $workingDir;
+        }
+
+        $home = \realpath(self::userDir() ?? '/');
+        for ($dir = $workingDir; \dirname($dir) !== $dir && \realpath($dir) !== $home; $dir = \dirname($dir)) {
+            if (\is_file($dir . '/' . $file)) {
+                return $dir;
+            }
+        }
+
+        return $workingDir;
     }
 
     public static function fromProject(string $projectDir): ?self
@@ -107,20 +131,51 @@ final class ProtobufRuntime
         };
     }
 
+    /**
+     * Resolves `vendor-dir` as Composer does, expanding a leading `~/`; `{$home}` (the Composer home) is left as is.
+     */
     private static function vendorDir(string $projectDir): string
     {
         $vendor = Environment::get('COMPOSER_VENDOR_DIR');
 
         if ($vendor === null || $vendor === '') {
+            $file = self::composerFile();
+            $file = self::isAbsolute($file) ? $file : $projectDir . '/' . $file;
             /** @var mixed $composer */
-            $composer = \json_decode((string) @\file_get_contents($projectDir . '/composer.json'), true);
+            $composer = \json_decode((string) @\file_get_contents($file), true);
             /** @var mixed $vendor */
             $vendor = \is_array($composer) ? $composer['config']['vendor-dir'] ?? null : null;
             $vendor = \is_string($vendor) && $vendor !== '' ? $vendor : 'vendor';
         }
 
-        $absolute = \preg_match('#^(?:[a-z]:)?[/\\\\]#i', $vendor) === 1;
+        $user = self::userDir();
+        if ($user !== null && \preg_match('#^~[/\\\\]#', $vendor) === 1) {
+            $vendor = $user . \substr($vendor, 1);
+        }
 
-        return $absolute ? $vendor : $projectDir . '/' . $vendor;
+        return self::isAbsolute($vendor) ? $vendor : $projectDir . '/' . $vendor;
+    }
+
+    /**
+     * @return non-empty-string The manifest named by `COMPOSER`, relative to the project unless absolute.
+     */
+    private static function composerFile(): string
+    {
+        $file = \trim(Environment::get('COMPOSER') ?? '');
+
+        return $file === '' ? 'composer.json' : $file;
+    }
+
+    private static function userDir(): ?string
+    {
+        $dir = Environment::get('HOME');
+        $dir = $dir === null || $dir === '' ? Environment::get('USERPROFILE') : $dir;
+
+        return $dir === null || $dir === '' ? null : $dir;
+    }
+
+    private static function isAbsolute(string $path): bool
+    {
+        return \preg_match('#^(?:[a-z]:)?[/\\\\]#i', $path) === 1;
     }
 }
