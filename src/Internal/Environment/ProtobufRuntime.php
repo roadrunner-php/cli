@@ -50,6 +50,9 @@ final class ProtobufRuntime
      * Finds the project root as Composer does: the nearest directory up from the working one with a `composer.json`
      * (or the file named by `COMPOSER`), looking neither in the user home nor in the filesystem root.
      *
+     * An absolute `COMPOSER` keeps the working directory: Composer resolves `vendor-dir` against it,
+     * not against the manifest's directory.
+     *
      * @return string The working directory itself when none has the file.
      */
     public static function projectDir(string $workingDir): string
@@ -155,7 +158,7 @@ final class ProtobufRuntime
     }
 
     /**
-     * Resolves `vendor-dir` as Composer does, expanding a leading `~/`; `{$home}` (the Composer home) is left as is.
+     * Resolves `vendor-dir` as Composer does; `{$home}` (the Composer home) is left as is.
      */
     private static function vendorDir(string $projectDir): string
     {
@@ -169,12 +172,30 @@ final class ProtobufRuntime
             $vendor = \is_string($vendor) && $vendor !== '' ? $vendor : 'vendor';
         }
 
-        $user = self::userDir();
-        if ($user !== null && \preg_match('#^~[/\\\\]#', $vendor) === 1) {
-            $vendor = $user . \substr($vendor, 1);
-        }
+        $vendor = self::expandPath($vendor);
 
         return self::isAbsolute($vendor) ? $vendor : $projectDir . '/' . $vendor;
+    }
+
+    /**
+     * Expands a leading `~/`, `$VAR` or `%VAR%` (on any OS) as Composer's `Platform::expandPath()` does;
+     * `${VAR}` is left as is, and an unset variable expands to an empty string.
+     */
+    private static function expandPath(string $path): string
+    {
+        if (\preg_match('#^~[/\\\\]#', $path) === 1) {
+            $user = self::userDir();
+
+            return $user === null ? $path : $user . \substr($path, 1);
+        }
+
+        if (\preg_match('#^(\$|(%))(\w++)(?(2)%)(.*)#', $path, $m) !== 1) {
+            return $path;
+        }
+
+        $value = $m[3] === 'HOME' && \PHP_OS_FAMILY === 'Windows' ? self::userDir() : Environment::get($m[3]);
+
+        return ($value ?? '') . $m[4];
     }
 
     /**

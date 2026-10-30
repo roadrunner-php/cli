@@ -22,6 +22,7 @@ final class ProtobufRuntimeTest
     private string $dir;
     private ?bool $canGetVendors = null;
     private array $server = [];
+    private array $env = [];
 
     /**
      * The PHP runtime minor is the protoc major since protobuf 21; up to 3.20 both shared one version.
@@ -118,6 +119,58 @@ final class ProtobufRuntimeTest
         $_SERVER['HOME'] = $this->dir;
 
         Assert::same(ProtobufRuntime::fromPackage($this->dir . '/project')?->version, '4.33.1');
+    }
+
+    #[DataSet(['$PROTOBUF_TEST_DEPS/vendor'], 'dollar')]
+    #[DataSet(['%PROTOBUF_TEST_DEPS%/vendor'], 'percent')]
+    public function expandsVariableInVendorDir(string $vendor): void
+    {
+        \mkdir($this->dir . '/project');
+        \file_put_contents($this->dir . '/project/composer.json', \json_encode(['config' => ['vendor-dir' => $vendor]]));
+        $this->installed('deps/vendor', [['name' => 'google/protobuf', 'version' => '4.33.1']]);
+        $_SERVER['PROTOBUF_TEST_DEPS'] = $this->dir . '/deps';
+
+        Assert::same(ProtobufRuntime::fromPackage($this->dir . '/project')?->version, '4.33.1');
+    }
+
+    public function expandsVariableInComposerVendorDirVariable(): void
+    {
+        \mkdir($this->dir . '/project');
+        $this->installed('deps', [['name' => 'google/protobuf', 'version' => '4.33.1']]);
+        $_SERVER['PROTOBUF_TEST_DEPS'] = $this->dir . '/deps';
+        $_SERVER['COMPOSER_VENDOR_DIR'] = '$PROTOBUF_TEST_DEPS';
+
+        Assert::same(ProtobufRuntime::fromPackage($this->dir . '/project')?->version, '4.33.1');
+    }
+
+    /**
+     * Composer expands only `$VAR` and `%VAR%`.
+     */
+    public function keepsBracedVariableInVendorDir(): void
+    {
+        \file_put_contents($this->dir . '/composer.json', '{"config": {"vendor-dir": "${PROTOBUF_TEST_DEPS}"}}');
+        $this->installed('deps', [['name' => 'google/protobuf', 'version' => '4.33.1']]);
+        $this->installed('${PROTOBUF_TEST_DEPS}', [['name' => 'google/protobuf', 'version' => '4.26.0']]);
+        $_SERVER['PROTOBUF_TEST_DEPS'] = $this->dir . '/deps';
+
+        Assert::same(ProtobufRuntime::fromPackage($this->dir)?->version, '4.26.0');
+    }
+
+    /**
+     * Composer resolves `vendor-dir` against the working directory, not against the directory of an absolute manifest.
+     */
+    public function resolvesAbsoluteManifestVendorDirAgainstWorkingDir(): void
+    {
+        \mkdir($this->dir . '/app/proto', 0777, true);
+        \file_put_contents($this->dir . '/app/app.json', '{"config": {"vendor-dir": "deps"}}');
+        $this->installed('app/deps', [['name' => 'google/protobuf', 'version' => '4.26.0']]);
+        $this->installed('app/proto/deps', [['name' => 'google/protobuf', 'version' => '4.33.1']]);
+        $_SERVER['COMPOSER'] = $this->dir . '/app/app.json';
+
+        $projectDir = ProtobufRuntime::projectDir($this->dir . '/app/proto');
+
+        Assert::same($projectDir, $this->dir . '/app/proto');
+        Assert::same(ProtobufRuntime::fromPackage($projectDir)?->version, '4.33.1');
     }
 
     public function findsProjectUpFromWorkingDir(): void
@@ -281,7 +334,12 @@ final class ProtobufRuntimeTest
     {
         $this->dir = TempDirectory::create();
         $this->server = $_SERVER;
-        unset($_SERVER['COMPOSER'], $_ENV['COMPOSER']);
+        $this->env = $_ENV;
+        // `Environment::get()` reads `$_ENV` first, so an inherited value there would override a fixture in `$_SERVER`.
+        foreach (['COMPOSER', 'COMPOSER_VENDOR_DIR', 'HOME', 'USERPROFILE', 'PROTOBUF_TEST_DEPS'] as $key) {
+            unset($_ENV[$key]);
+        }
+        unset($_SERVER['COMPOSER'], $_SERVER['COMPOSER_VENDOR_DIR']);
         $ref = new \ReflectionClass(InstalledVersions::class);
         $this->canGetVendors = $ref->getStaticPropertyValue('canGetVendors');
         $ref->setStaticPropertyValue('canGetVendors', false);
@@ -292,6 +350,7 @@ final class ProtobufRuntimeTest
     protected function restore(): void
     {
         $_SERVER = $this->server;
+        $_ENV = $this->env;
         TempDirectory::remove($this->dir);
         InstalledVersions::reload(null);
         (new \ReflectionClass(InstalledVersions::class))->setStaticPropertyValue('canGetVendors', $this->canGetVendors);
