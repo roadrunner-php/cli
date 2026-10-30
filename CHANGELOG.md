@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.1.0](https://github.com/roadrunner-php/cli/compare/3.0.1...3.1.0) (2026-10-30)
+
+
+### Features
+
+* add get-grpc-tools command ([#76](https://github.com/roadrunner-php/cli/issues/76)) ([e8882ba](https://github.com/roadrunner-php/cli/commit/e8882bae2461bbd4d6b3c24180779397652b6864))
+* deprecate download-protoc-binary in favour of get-grpc-tools ([e8882ba](https://github.com/roadrunner-php/cli/commit/e8882bae2461bbd4d6b3c24180779397652b6864))
+
 ## [3.0.1](https://github.com/roadrunner-php/cli/compare/3.0.0...3.0.1) (2026-10-19)
 
 
