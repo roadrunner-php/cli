@@ -1,0 +1,239 @@
+<?php
+
+/**
+ * This file is part of RoadRunner package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
+
+namespace Spiral\RoadRunner\Console;
+
+use Spiral\RoadRunner\Console\Internal\Downloader\DLoadDownloader;
+use Spiral\RoadRunner\Console\Internal\Environment\ProtobufRuntime;
+use Spiral\RoadRunner\Console\Internal\Environment\RoadRunnerVersion;
+use Spiral\RoadRunner\Console\Internal\Option\ArchitectureOption;
+use Spiral\RoadRunner\Console\Internal\Option\InstallationLocationOption;
+use Spiral\RoadRunner\Console\Internal\Option\OperatingSystemOption;
+use Spiral\RoadRunner\Console\Internal\Option\StabilityOption;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+
+/**
+ * Downloads the binaries `buf generate` needs to generate gRPC code: buf, protoc and protoc-gen-php-grpc.
+ *
+ * @psalm-api
+ */
+final class GetGrpcToolsCommand extends Command
+{
+    private const BUF_CONSTRAINT = '^1';
+    private const ANY_VERSION = '*';
+
+    private OperatingSystemOption $os;
+    private ArchitectureOption $arch;
+    private StabilityOption $stability;
+    private InstallationLocationOption $location;
+    private DLoadDownloader $downloader;
+
+    /** @var \Closure(): list<ProtobufRuntime> */
+    private \Closure $runtimes;
+
+    /**
+     * @param (\Closure(): list<ProtobufRuntime>)|null $runtimes Finds the protobuf runtimes of the project, the one
+     *        in use first; {@see ProtobufRuntime::detect()} in the project found up from the working directory
+     *        by default.
+     */
+    public function __construct(?string $name = null, ?DLoadDownloader $downloader = null, ?\Closure $runtimes = null)
+    {
+        $this->downloader = $downloader ?? new DLoadDownloader();
+        $this->runtimes = $runtimes ?? static fn(): array => ProtobufRuntime::detect(ProtobufRuntime::projectDir(\getcwd() ?: '.'));
+        parent::__construct($name ?? 'get-grpc-tools');
+
+        $this->os = new OperatingSystemOption($this);
+        $this->arch = new ArchitectureOption($this);
+        $this->location = new InstallationLocationOption($this);
+        $this->stability = new StabilityOption($this);
+    }
+
+    #[\Override]
+    public function getDescription(): string
+    {
+        return 'Install or update buf, protoc and protoc-gen-php-grpc to generate gRPC code';
+    }
+
+    #[\Override]
+    public function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $io = new SymfonyStyle($input, $output);
+
+        $target = $this->location->get($input, $io);
+        $os = $this->os->get($input, $io);
+        $arch = $this->arch->get($input, $io);
+        $stability = $this->stability->get($input, $io);
+
+        $output->writeln('');
+        $output->writeln(' Environment:');
+        $output->writeln(\sprintf('   - Stability:        <info>%s</info>', $stability));
+        $output->writeln(\sprintf('   - Operating System: <info>%s</info>', $os));
+        $output->writeln(\sprintf('   - Architecture:     <info>%s</info>', $arch));
+        $output->writeln('');
+
+        [$protoc, $derivedFrom] = $this->protocConstraint($input, $io);
+
+        $tools = [
+            'buf' => $this->option($input, 'buf'),
+            'protoc' => $protoc,
+            'protoc-gen-php-grpc' => $this->option($input, 'plugin'),
+        ];
+
+        $output->writeln(' Versions:');
+        foreach ($tools as $tool => $constraint) {
+            $output->writeln(\sprintf('   - %-20s <info>%s</info>', $tool . ':', $constraint));
+        }
+        $output->writeln('');
+
+        $failed = [];
+        foreach ($tools as $tool => $constraint) {
+            // Without force DLoad keeps a binary whose `--version` satisfies the constraint and replaces any other,
+            // so protoc-gen-php-grpc, which has no version command, is downloaded every time
+            $code = $this->downloader->download(
+                software: $tool,
+                constraint: $constraint,
+                stability: $stability,
+                os: $os,
+                arch: $arch,
+                location: $target,
+                force: false,
+                output: $output,
+            );
+
+            if ($code === self::SUCCESS) {
+                continue;
+            }
+
+            $failed[] = $tool;
+            if ($tool === 'protoc' && $derivedFrom !== null) {
+                $io->error(\sprintf(
+                    'Could not install protoc %s, the version %s %s supports. '
+                    . 'If no protoc release matches it, choose one with --protoc=<constraint>.',
+                    $constraint,
+                    $derivedFrom->name,
+                    $derivedFrom->version,
+                ));
+            }
+        }
+
+        if ($failed !== []) {
+            $io->error('Not installed: ' . \implode(', ', $failed));
+
+            return self::FAILURE;
+        }
+
+        $io->success('gRPC tools are ready in ' . $target);
+
+        return self::SUCCESS;
+    }
+
+    #[\Override]
+    protected function configure(): void
+    {
+        $this->addOption(
+            'protoc',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'Version constraint of protoc; by default the protoc major the installed google/protobuf or ext-protobuf supports',
+        );
+
+        $this->addOption(
+            'plugin',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'Version constraint of protoc-gen-php-grpc',
+            RoadRunnerVersion::constraint(),
+        );
+
+        $this->addOption(
+            'buf',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'Version constraint of buf',
+            self::BUF_CONSTRAINT,
+        );
+    }
+
+    /**
+     * @param 'buf'|'plugin'|'protoc' $name
+     * @return ($name is 'protoc' ? non-empty-string|null : non-empty-string) The option's default when it is
+     *         empty or not given; protoc has none.
+     */
+    private function option(InputInterface $input, string $name): ?string
+    {
+        /** @var mixed $value */
+        $value = $input->getOption($name);
+        if (\is_string($value) && $value !== '') {
+            return $value;
+        }
+
+        /** @var non-empty-string|null */
+        return $this->getDefinition()->getOption($name)->getDefault();
+    }
+
+    /**
+     * @return array{non-empty-string, ProtobufRuntime|null} The constraint and the runtime it is derived from.
+     */
+    private function protocConstraint(InputInterface $input, SymfonyStyle $io): array
+    {
+        $option = $this->option($input, 'protoc');
+        if ($option !== null) {
+            return [$option, null];
+        }
+
+        $runtimes = ($this->runtimes)();
+        $runtime = $runtimes[0] ?? null;
+        if ($runtime === null) {
+            $io->warning(\sprintf(
+                'Neither %s nor %s is installed: keeping an installed protoc or installing the latest. Choose a version with --protoc=<constraint>.',
+                ProtobufRuntime::PACKAGE,
+                ProtobufRuntime::EXTENSION,
+            ));
+
+            return [self::ANY_VERSION, null];
+        }
+
+        $constraint = $runtime->protocConstraint();
+        if ($constraint === null) {
+            $io->warning(\sprintf(
+                'Can not tell the protoc version for %s %s: keeping an installed protoc or installing the latest. Choose a version with --protoc=<constraint>.',
+                $runtime->name,
+                $runtime->version,
+            ));
+
+            return [self::ANY_VERSION, null];
+        }
+
+        $io->writeln(\sprintf(' %s <info>%s</info> -> protoc <info>%s</info>', $runtime->name, $runtime->version, $constraint));
+        $io->newLine();
+
+        foreach (\array_slice($runtimes, 1) as $other) {
+            $otherConstraint = $other->protocConstraint();
+            if ($otherConstraint !== null && $otherConstraint !== $constraint) {
+                $io->warning(\sprintf(
+                    '%s %s (protoc %s) is used, while the project has %s %s (protoc %s); choose with --protoc=<constraint>.',
+                    $runtime->name,
+                    $runtime->version,
+                    $constraint,
+                    $other->name,
+                    $other->version,
+                    $otherConstraint,
+                ));
+            }
+        }
+
+        return [$constraint, $runtime];
+    }
+}

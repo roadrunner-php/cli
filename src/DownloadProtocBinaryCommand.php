@@ -6,6 +6,7 @@ namespace Spiral\RoadRunner\Console;
 
 use Spiral\RoadRunner\Console\Environment\OperatingSystem;
 use Spiral\RoadRunner\Console\Internal\Downloader\DLoadDownloader;
+use Spiral\RoadRunner\Console\Internal\Installation\ExistingBinary;
 use Spiral\RoadRunner\Console\Internal\Option\ArchitectureOption;
 use Spiral\RoadRunner\Console\Internal\Option\InstallationLocationOption;
 use Spiral\RoadRunner\Console\Internal\Option\OperatingSystemOption;
@@ -14,7 +15,6 @@ use Spiral\RoadRunner\Console\Internal\Option\VersionFilterOption;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\StyleInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
@@ -46,13 +46,14 @@ final class DownloadProtocBinaryCommand extends Command
     #[\Override]
     public function getDescription(): string
     {
-        return 'Install or update protoc-gen-php-grpc binary';
+        return 'Install or update protoc-gen-php-grpc binary (deprecated, use get-grpc-tools)';
     }
 
     #[\Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+        $io->warning('download-protoc-binary is deprecated: use get-grpc-tools, which also installs protoc and buf.');
 
         $target = $this->location->get($input, $io);
         $os = $this->os->get($input, $io);
@@ -67,7 +68,7 @@ final class DownloadProtocBinaryCommand extends Command
 
         $binary = $target . ($os === OperatingSystem::OS_WINDOWS ? '/protoc-gen-php-grpc.exe' : '/protoc-gen-php-grpc');
 
-        if (!$this->checkExisting($binary, $io)) {
+        if (!ExistingBinary::mayInstall($binary, 'protoc-gen-php-grpc', $io)) {
             $io->warning('protoc-gen-php-grpc has not been installed');
 
             return 1;
@@ -83,20 +84,5 @@ final class DownloadProtocBinaryCommand extends Command
             force: true,
             output: $output,
         );
-    }
-
-    private function checkExisting(string $binary, StyleInterface $io): bool
-    {
-        if (\is_file($binary)) {
-            $io->warning('protoc-gen-php-grpc binary file already exists!');
-
-            if (!$io->confirm('Do you want overwrite it?', false)) {
-                $io->note('Skipping protoc-gen-php-grpc installation...');
-
-                return false;
-            }
-        }
-
-        return true;
     }
 }

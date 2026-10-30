@@ -75,10 +75,10 @@ final class DLoadDownloaderTest
         Assert::same(\simplexml_load_file($config)?->count(), 0);
     }
 
-    #[DataSet(['https://ghe.example.com/api/v3', 'https://ghe.example.com/roadrunner-server/roadrunner'])]
-    #[DataSet(['https://GHE.example.com/api/v3/', 'https://ghe.example.com/roadrunner-server/roadrunner'], 'trailing slash')]
-    #[DataSet(['http://127.0.0.1:8080/api/v3', 'http://127.0.0.1:8080/roadrunner-server/roadrunner'], 'scheme and port are kept')]
-    public function pointsRegistryAtEnterpriseServer(string $url, string $uri): void
+    #[DataSet(['https://ghe.example.com/api/v3', 'https://ghe.example.com'])]
+    #[DataSet(['https://GHE.example.com/api/v3/', 'https://ghe.example.com'], 'trailing slash')]
+    #[DataSet(['http://127.0.0.1:8080/api/v3', 'http://127.0.0.1:8080'], 'scheme and port are kept')]
+    public function pointsRegistryAtEnterpriseServer(string $url, string $server): void
     {
         $get = new DLoadGetSpy();
 
@@ -94,7 +94,12 @@ final class DLoadDownloaderTest
                 isset($software->repository['server']),
             ];
         }
-        Assert::same($repositories, ['rr' => [$uri, false], 'protoc-gen-php-grpc' => [$uri, false]]);
+        Assert::same($repositories, [
+            'rr' => [$server . '/roadrunner-server/roadrunner', false],
+            'protoc-gen-php-grpc' => [$server . '/roadrunner-server/roadrunner', false],
+            'protoc' => [$server . '/protocolbuffers/protobuf', false],
+            'buf' => [$server . '/bufbuild/buf', false],
+        ]);
         Assert::false(\is_file((string) $get->calls[0]->getOption('config')));
     }
 
@@ -204,6 +209,25 @@ final class DLoadDownloaderTest
         $this->download($get, constraint: $constraint, stability: 'beta');
 
         Assert::same($get->calls[0]->getArgument('software'), ['rr:' . $constraint . '@beta']);
+    }
+
+    /**
+     * Only the RoadRunner repository has calendar releases to keep out.
+     */
+    #[DataSet(['buf', '*', 'buf:*@stable'], 'wildcard')]
+    #[DataSet(['protoc', '', 'protoc:*@stable'], 'empty constraint')]
+    #[DataSet(['protoc', '*@rc', 'protoc:*@rc'], 'explicit stability')]
+    #[DataSet(['protoc', '>=30.0', 'protoc:>=30.0@stable'], 'lower bound')]
+    #[DataSet(['buf', '^1 || >=2.1', 'buf:^1 || >=2.1@stable'], 'alternatives')]
+    #[DataSet(['protoc-gen-php-grpc', '>=3.0', 'protoc-gen-php-grpc:>=3.0 <2000@stable'], 'RoadRunner plugin')]
+    public function boundsOnlyRoadRunnerSoftware(string $software, string $constraint, string $expected): void
+    {
+        $get = new DLoadGetSpy();
+
+        (new DLoadDownloader($get))
+            ->download($software, $constraint, 'stable', 'linux', 'amd64', $this->dir, false, new BufferedOutput());
+
+        Assert::same($get->calls[0]->getArgument('software'), [$expected]);
     }
 
     public function returnsDLoadExitCode(): void

@@ -1,0 +1,61 @@
+[
+    {
+        "tag_name": "v37.0-rc1",
+        "prerelease": true,
+        "assets": [
+            "protobuf-37.0-rc1.tar.gz",
+            "protoc-37.0-rc-1-linux-x86_64.zip",
+            "protoc-37.0-rc-1-win64.zip"
+        ]
+    },
+    {
+        "tag_name": "v36.2",
+        "prerelease": false,
+        "assets": [
+            "protobuf-36.2.tar.gz",
+            "protobuf-36.2.zip",
+            "protoc-36.2-linux-aarch_64.zip",
+            "protoc-36.2-linux-x86_32.zip",
+            "protoc-36.2-linux-x86_64.zip",
+            "protoc-36.2-osx-universal_binary.zip",
+            "protoc-36.2-win32.zip",
+            "protoc-36.2-win64.zip"
+        ]
+    },
+    {
+        "tag_name": "v36.1",
+        "prerelease": false,
+        "assets": [
+            "protobuf-36.1.tar.gz",
+            "protoc-36.1-linux-x86_64.zip",
+            "protoc-36.1-win64.zip"
+        ]
+    },
+    {
+        "tag_name": "v33.6",
+        "prerelease": false,
+        "assets": [
+            "protobuf-33.6.tar.gz",
+            "protoc-33.6-linux-x86_64.zip",
+            "protoc-33.6-win64.zip"
+        ]
+    },
+    {
+        "tag_name": "v21.12",
+        "prerelease": false,
+        "assets": [
+            "protobuf-all-21.12.tar.gz",
+            "protoc-21.12-linux-x86_64.zip",
+            "protoc-21.12-win64.zip"
+        ]
+    },
+    {
+        "tag_name": "v3.20.3",
+        "prerelease": false,
+        "assets": [
+            "protobuf-all-3.20.3.tar.gz",
+            "protoc-3.20.3-linux-x86_64.zip",
+            "protoc-3.20.3-win64.zip"
+        ]
+    }
+]

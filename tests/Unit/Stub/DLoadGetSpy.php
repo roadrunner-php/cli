@@ -21,9 +21,14 @@ final class DLoadGetSpy extends Command
     /** @var list<string> Contents of the `--config` file at the time of each call. */
     public array $configs = [];
 
+    /**
+     * @param string|null $binary File name of the fake binary; the requested software name by default.
+     * @param list<string> $failing Software names that fail with exit code 1 whatever `$exitCode` is.
+     */
     public function __construct(
         private readonly int $exitCode = self::SUCCESS,
-        private readonly string $binary = 'rr',
+        private readonly ?string $binary = null,
+        private readonly array $failing = [],
     ) {
         parent::__construct('get');
     }
@@ -38,12 +43,16 @@ final class DLoadGetSpy extends Command
         $this->calls[] = $input;
         $this->configs[] = (string) @\file_get_contents((string) $input->getOption('config'));
 
-        if ($this->exitCode === self::SUCCESS) {
-            \file_put_contents($input->getOption('path') . '/' . $this->binary, 'new binary');
+        $software = \implode(' ', $input->getArgument('software'));
+        $name = \explode(':', $software, 2)[0];
+        $exitCode = \in_array($name, $this->failing, true) ? self::FAILURE : $this->exitCode;
+
+        if ($exitCode === self::SUCCESS) {
+            \file_put_contents($input->getOption('path') . '/' . ($this->binary ?? $name), 'new binary');
         }
 
-        $output->writeln('dload: ' . \implode(' ', $input->getArgument('software')));
+        $output->writeln('dload: ' . $software);
 
-        return $this->exitCode;
+        return $exitCode;
     }
 }

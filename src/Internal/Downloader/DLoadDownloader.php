@@ -49,12 +49,17 @@ final class DLoadDownloader
     private const ANY_VERSION = '>=3.0 ' . self::CALENDAR_BOUND;
 
     /**
+     * Software released from the RoadRunner repository, the only one with calendar versions.
+     */
+    private const ROADRUNNER_SOFTWARE = ['rr', 'protoc-gen-php-grpc'];
+
+    /**
      * DLoad serves the API of a GitHub Enterprise Server at `scheme://host[:port]/api/v3`, so no other path can be mapped.
      */
     private const ENTERPRISE_API_PATH = '/api/v3';
 
     /**
-     * The RoadRunner entries of DLoad's built-in registry, with the server `scheme://host[:port]` to substitute.
+     * The entries of DLoad's built-in registry this package downloads, with the server `scheme://host[:port]` to substitute.
      *
      * DLoad takes a self-hosted GitHub from the repository `uri` itself: `scheme://host[:port]/owner/repo`.
      */
@@ -69,6 +74,14 @@ final class DLoadDownloader
                 <software name="ProtoC PHP gRPC Plugin" alias="protoc-gen-php-grpc">
                     <repository type="github" uri="%1$s/roadrunner-server/roadrunner" asset-pattern="/^protoc-gen-php-grpc-.*/"/>
                     <binary name="protoc-gen-php-grpc"/>
+                </software>
+                <software name="Protobuf compiler" alias="protoc">
+                    <repository type="github" uri="%1$s/protocolbuffers/protobuf" asset-pattern="/^protoc-.*/"/>
+                    <binary name="protoc" version-command="--version"/>
+                </software>
+                <software name="Buf" alias="buf">
+                    <repository type="github" uri="%1$s/bufbuild/buf" asset-pattern="/^buf-.*/"/>
+                    <binary name="buf" pattern="/^buf(-.*)?(\.exe)?$/" version-command="--version"/>
                 </software>
             </registry>
         </dload>
@@ -90,8 +103,9 @@ final class DLoadDownloader
     }
 
     /**
-     * @param non-empty-string $software DLoad software alias, e.g. "rr" or "protoc-gen-php-grpc".
-     * @param string $constraint Composer version constraint; "*" or empty means 3.x or a later semver line.
+     * @param non-empty-string $software DLoad software alias, e.g. "rr", "protoc-gen-php-grpc", "protoc" or "buf".
+     * @param string $constraint Composer version constraint; "*" or empty means any version, which for
+     *        the RoadRunner software is 3.x or a later semver line.
      * @param string $stability Minimum stability, e.g. "stable" or "beta".
      * @param bool $force Overwrite the binary if it already exists in the location.
      *
@@ -110,7 +124,11 @@ final class DLoadDownloader
         $config = $this->createConfig();
 
         $input = new ArrayInput([
-            'software' => [$software . self::versionSuffix($constraint, $stability)],
+            'software' => [$software . self::versionSuffix(
+                $constraint,
+                $stability,
+                \in_array($software, self::ROADRUNNER_SOFTWARE, true),
+            )],
             '--config' => $config ?? self::CONFIG,
             '--path' => $location,
             '--os' => $os,
@@ -133,19 +151,21 @@ final class DLoadDownloader
 
     /**
      * DLoad ignores `--stability` once a version is given: the stability has to be a part of the constraint.
+     *
+     * @param bool $calendar Whether the software has calendar releases an unbounded constraint must stay below.
      */
-    private static function versionSuffix(string $constraint, string $stability): string
+    private static function versionSuffix(string $constraint, string $stability, bool $calendar): string
     {
         [$version, $explicitStability] = \explode('@', \trim($constraint), 2) + [1 => null];
         $version = \trim($version);
 
         if ($version === '' || $version === '*') {
-            $version = self::ANY_VERSION;
+            $version = $calendar ? self::ANY_VERSION : '*';
+        } elseif ($calendar) {
+            // DLoad has no parentheses, so the bound goes into each alternative
+            $alternatives = \preg_split('/\s*\|\|?\s*/', $version) ?: [$version];
+            $version = \implode(' || ', \array_map(self::boundAlternative(...), $alternatives));
         }
-
-        // DLoad has no parentheses, so the bound goes into each alternative
-        $alternatives = \preg_split('/\s*\|\|?\s*/', $version) ?: [$version];
-        $version = \implode(' || ', \array_map(self::boundAlternative(...), $alternatives));
 
         return ':' . $version . '@' . ($explicitStability ?? $stability);
     }
